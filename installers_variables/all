@@ -1,10 +1,10 @@
 # Домен проекта
 http://enginegp.ru
 
-# Основное зеркало
+# Основной репозиторий (перенесно на GiHub и более не используется)
 http://mirror.enginegp.ru
 
-# Зеркало с играми
+# Репозиторий с играми
 http://gs.enginegp.ru
 
 # Версия PHP по умолчанию
@@ -21,4 +21,3 @@ phpMyAdmin-5.1.1-all-languages
 
 # Ссылка на PHPMyAdmin
 https://files.phpmyadmin.net/phpMyAdmin/5.1.1/phpMyAdmin-5.1.1-all-languages.tar.gz
-
