@@ -1,1 +1,42 @@
-SITE="https://enginegp.ru"
+# Последняя версия установщика, имеющаяся в репозитории
+1.0
+
+# Домен проекта
+http://enginegp.ru
+
+# Основной репозиторий (перенесно на GitHub и более не используется)
+http://mirror.enginegp.ru
+
+# Репозиторий с играми
+http://gs.enginegp.ru
+
+# Версия PHP по умолчанию
+7.0
+
+# Веб-сервер по умолчанию
+Apache
+
+# Версия SQL
+mysql-apt-config_0.8.18-1_all
+
+# Ссылка на SQL
+https://dev.mysql.com/get/mysql-apt-config_0.8.18-1_all.deb
+
+# Версия PHPMyAdmin
+phpMyAdmin-5.1.1-all-languages
+
+# Ссылка на PHPMyAdmin
+https://files.phpmyadmin.net/phpMyAdmin/5.1.1/phpMyAdmin-5.1.1-all-languages.tar.gz
+
+# GitHub данные
+# Логин для доступа к приватному репозиторию EngineGP
+MaXa0H
+
+# Токен для доступа к приватному репозиторию EngineGP
+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
+
+# Ссылка для клонирования репозитория
+https://$GITUSER:$GITTOKEN@github.com/$GITUSER/EngineGP.git
+
+# Ссылка для клонирования репозитория с надстройками
+https://$GITUSER:$GITTOKEN@github.com/$GITUSER/EngineGP-requirements.git
