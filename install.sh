@@ -1156,7 +1156,7 @@ serPANELRES() {
 }
 # Установка MySQL
 installMYSQL() {
-	if [ $type = deb ] || [ $type = ubn ]; then
+	if [ $type = deb ]; then
 		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install mysql-server > /dev/null 2>&1
 		## Для Ubuntu + MySQL 5.7
 		#if [ $type = ubn ]; then
@@ -1165,6 +1165,12 @@ installMYSQL() {
 		#	ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQLPASS';
 		#	exit
 		#fi
+	## MySQL 5.6 Для Ubuntu
+	elif [ $type = ubn ]; then
+		wget https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.48-1debian9_amd64.deb-bundle.tar
+		dpkg -i mysql-server_5.6.48-1debian9_amd64.deb-bundle.tar
+		apt update
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install mysql-server-5.6 > /dev/null 2>&1
 	elif [ $type = "rhl" ]; then
 		yum install mariadb-server mariadb -y
 	fi
