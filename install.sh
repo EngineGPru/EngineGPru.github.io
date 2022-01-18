@@ -36,19 +36,20 @@ SHVER="2.0" # Версия установщика
 echo "Получение данных с сервера..."
 
 # GitHub
-#GITUSER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '33p') # Логин для доступа к приватному репозиторию EngineGP (пока не используется)
-#GITTOKEN=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '36p') # Токен для доступа к приватному репозиторию EngineGP (пока не используется)
-GITLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '39p') # Ссылка для клонирования репозитория
-GITREQLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '42p') # Ссылка для клонирования репозитория с надстройками
+#GITUSER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '39p') # Логин для доступа к приватному репозиторию EngineGP (пока не используется)
+#GITTOKEN=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '42p') # Токен для доступа к приватному репозиторию EngineGP (пока не используется)
+GITLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '45p') # Ссылка для клонирования репозитория
+GITREQLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '48p') # Ссылка для клонирования репозитория с надстройками
 
 # Получение переменных с сервера
 LASTSHVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '2p')  # Последняя доступная версия установщика
 GAMES=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '11p')  # Адрес репозитория игр
-PHPVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '14p') # Версия PHP
-PMALINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '29p') # Ссылка на phpMyAdmin
-PMAVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '26p') # Версия phpMyAdmin
-SQLLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '23p') # Ссылка на MySQL
-SQLVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '20p') # Версия MySQL
+PHPVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '14p') # Устанавливаемая версия PHP
+PMAVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '32p') # Устанавливаемая версия PHPMyAdmin
+PMALINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '35p') # Ссылка на phpMyAdmin
+SQLAPTVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '26p') # Устанавливаемая версия MySQL-apt
+SQLLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '29p') # Ссылка на MySQL-apt
+SQLVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '23p') # Устанавливаемая версия MySQL
 
 echo "Определение IP-адреса..."
 
@@ -151,7 +152,7 @@ install_enginegp() {
     echo -en "(${NUMS}/${PIMS}) Update packages..."
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Install MySQL5.7..."
+    echo -en "(${NUMS}/${PIMS}) Install MySQL$SQLVER..."
         installMYSQL
         infoStats
     echo -en "(${NUMS}/${PIMS}) Install phpMyAdmin..."
@@ -251,7 +252,7 @@ install_enginegp_location() {
     echo -en "(${NUMS}/${PLAI}) Update packages..."
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install MySQL5.7..."
+    echo -en "(${NUMS}/${PLAI}) Install MySQL$SQLVER..."
         installMYSQL
         infoStats
     echo -en "(${NUMS}/${PLAI}) Install phpMyAdmin..."
@@ -358,7 +359,7 @@ setting_location() {
     echo -en "(${NUMS}/${LSMS}) Update packages..."
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Install MySQL5.7..."
+    echo -en "(${NUMS}/${LSMS}) Install MySQL$SQLVER..."
         installMYSQL
         infoStats
     echo -en "(${NUMS}/${LSMS}) Install Java..."
@@ -1077,20 +1078,20 @@ varPANEL() {
     APACHEDIR='/etc/apache2/conf-available'
     APACHECFG=${APACHEDIR}'/enginegp.conf'
 }
-# Настройка MySQL
+# Подготовка к установке MySQL
 setMYSQL() {
 	if [ $type = deb ] || [ $type = ubn ]; then
 		wget $SQLLINK > /dev/null 2>&1
 		export DEBIAN_FRONTEND=noninteractive > /dev/null 2>&1
-		echo mysql-apt-config mysql-apt-config/select-server select mysql-5.7 | debconf-set-selections > /dev/null 2>&1
+		echo mysql-apt-config mysql-apt-config/select-server select mysql-$SQLVER | debconf-set-selections > /dev/null 2>&1
 		echo mysql-apt-config mysql-apt-config/select-product select Ok | debconf-set-selections > /dev/null 2>&1
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install ./$SQLVER.deb > /dev/null 2>&1
-		dpkg -i $SQLVER.deb > /dev/null 2>&1
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install ./$SQLAPTVER.deb > /dev/null 2>&1
+		dpkg -i $SQLAPTVER.deb > /dev/null 2>&1
 		echo mysql-community-server mysql-community-server/root-pass password "$MYSQLPASS" | debconf-set-selections > /dev/null 2>&1
 		echo mysql-community-server mysql-community-server/re-root-pass password "$MYSQLPASS" | debconf-set-selections > /dev/null 2>&1
 		mkdir /resegp > /dev/null 2>&1
 		echo "$MYSQLPASS" >> /resegp/conf.cfg
-		rm $SQLVER.deb > /dev/null 2>&1
+		rm $SQLAPTVER.deb > /dev/null 2>&1
 	elif [ $type = "rhl" ]; then
 		yum install mariadb-server mariadb
 	fi
@@ -1155,8 +1156,15 @@ serPANELRES() {
 }
 # Установка MySQL
 installMYSQL() {
-	if [ ubn = $type ] || [ ubn = $type ]; then
+	if [ $type = deb ] || [ $type = ubn ]; then
 		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install mysql-server > /dev/null 2>&1
+		## Для Ubuntu + MySQL 5.7
+		#if [ $type = ubn ]; then
+		#	sudo mysql
+		#	use mysql;
+		#	ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQLPASS';
+		#	exit
+		#fi
 	elif [ $type = "rhl" ]; then
 		yum install mariadb-server mariadb -y
 	fi
