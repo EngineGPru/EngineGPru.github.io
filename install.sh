@@ -31,7 +31,7 @@ if [ $type = "rhl" ]; then
 fi
 
 DOMAIN="https://enginegp.ru" # Основной домен для работы
-SHVER="2.0" # Версия установщика
+SHVER="2.1" # Версия установщика
 
 echo "Получение данных с сервера..."
 
@@ -975,7 +975,7 @@ infoStats() {
 }
 # Установка обязательных пакетов
 necPACK() {
-	if [ $type = "ubn" ]; then
+	if [ $type = "deb" ] || [ $type = "ubn" ]; then
 		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install git lsb-release apt-utils > /dev/null 2>&1
 	elif [ $type = "rhl" ]; then
 		yum -y install redhat-lsb-core yum-utils epel-release wget git
@@ -1099,7 +1099,7 @@ setMYSQL() {
 # Добавление PHP
 addPHP() {
 	# Для Debian
-	if [ $type = deb ] || [ deb = $type ]; then
+	if [ $type = deb ]; then
 		wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg > /dev/null 2>&1
 		sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' > /dev/null 2>&1
 	fi
@@ -1110,8 +1110,8 @@ installPHP() {
 		if [ $PHPVER = "7.4" ] || [ "7.4" = $PHPVER ]; then
 			PHPVER=""
 		else
-			apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install software-properties-common
-			add-apt-repository ppa:ondrej/php
+			apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install software-properties-common > /dev/null 2>&1
+			add-apt-repository ppa:ondrej/php > /dev/null 2>&1
 		fi
 	fi
 	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install php$PHPVER > /dev/null 2>&1
@@ -1156,21 +1156,12 @@ serPANELRES() {
 }
 # Установка MySQL
 installMYSQL() {
-	if [ $type = deb ]; then
+	if [ $type = deb ] || [ $type = ubn ]; then
 		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install mysql-server > /dev/null 2>&1
-		## Для Ubuntu + MySQL 5.7
-		#if [ $type = ubn ]; then
-		#	sudo mysql
-		#	use mysql;
-		#	ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQLPASS';
-		#	exit
-		#fi
-	## MySQL 5.6 Для Ubuntu
-	elif [ $type = ubn ]; then
-		wget https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.48-1debian9_amd64.deb-bundle.tar
-		dpkg -i mysql-server_5.6.48-1debian9_amd64.deb-bundle.tar
-		apt update
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install mysql-server-5.6 > /dev/null 2>&1
+		## Для Ubuntu + MySQL 5.7 и выше
+		if [ $type = ubn ]; then
+		mysql -u root -p$MYSQLPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQLPASS';" > /dev/null 2>&1 | grep -v "Using a password on the command"
+		fi
 	elif [ $type = "rhl" ]; then
 		yum install mariadb-server mariadb -y
 	fi
