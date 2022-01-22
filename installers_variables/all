@@ -22,11 +22,11 @@ MySQL
 # Версия БД
 5.7
 
-# Версия SQL-apt (mysql-apt-config_0.8.18-1_all)
-mysql-apt-config_0.8.14-1_all
+# Версия SQL-apt
+mysql-apt-config_0.8.18-1_all
 
-# Ссылка на SQL-apt (https://dev.mysql.com/get/mysql-apt-config_0.8.18-1_all.deb)
-https://dev.mysql.com/get/mysql-apt-config_0.8.14-1_all.deb
+# Ссылка на SQL-apt
+https://dev.mysql.com/get/mysql-apt-config_0.8.18-1_all.deb
 
 # Версия PHPMyAdmin (phpMyAdmin-5.1.1-all-languages)
 phpMyAdmin-4.9.4-all-languages
