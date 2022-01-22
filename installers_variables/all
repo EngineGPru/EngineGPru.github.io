@@ -28,11 +28,11 @@ mysql-apt-config_0.8.18-1_all
 # Ссылка на SQL-apt
 https://dev.mysql.com/get/mysql-apt-config_0.8.18-1_all.deb
 
-# Версия PHPMyAdmin (phpMyAdmin-5.1.1-all-languages)
-phpMyAdmin-4.7.4-all-languages
+# Версия PHPMyAdmin
+phpMyAdmin-5.1.1-all-languages
 
-# Ссылка на PHPMyAdmin (https://files.phpmyadmin.net/phpMyAdmin/5.1.1/phpMyAdmin-5.1.1-all-languages.tar.gz)
-https://files.phpmyadmin.net/phpMyAdmin/4.7.4/phpMyAdmin-4.7.4-all-languages.zip
+# Ссылка на PHPMyAdmin
+https://files.phpmyadmin.net/phpMyAdmin/5.1.1/phpMyAdmin-5.1.1-all-languages.tar.gz
 
 # GitHub данные
 # Логин для доступа к репозиторию EngineGP
