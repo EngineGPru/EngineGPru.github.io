@@ -1,5 +1,5 @@
 # Последняя версия установщика, имеющаяся в репозитории
-2.0.1
+2.02
 
 # Домен проекта
 http://enginegp.ru
@@ -13,33 +13,18 @@ http://gs.enginegp.ru
 # Версия PHP по умолчанию
 7.0
 
-# Веб-сервер по умолчанию
-Apache
-
-# СУБД
-MySQL
-
-# Версия БД
-5.7
-
-# Версия SQL-apt
-mysql-apt-config_0.8.18-1_all
-
-# Ссылка на SQL-apt
-https://dev.mysql.com/get/mysql-apt-config_0.8.18-1_all.deb
-
 # Версия PHPMyAdmin (phpMyAdmin-5.1.1-all-languages)
-phpMyAdmin-4.7.4-all-languages
+phpMyAdmin-4.9.4-all-languages
 
 # Ссылка на PHPMyAdmin (https://files.phpmyadmin.net/phpMyAdmin/5.1.1/phpMyAdmin-5.1.1-all-languages.tar.gz)
-https://files.phpmyadmin.net/phpMyAdmin/4.7.4/phpMyAdmin-4.7.4-all-languages.zip
+http://mirror.enginegp.ru/files/phpmyadmin/phpMyAdmin-4.9.4-all-languages.tar.gz
 
 # GitHub данные
 # Логин для доступа к репозиторию EngineGP
 MaXa0H
 
 # Токен для доступа к приватному репозиторию EngineGP
-
+No
 
 # Ссылка для клонирования репозитория (https://$GITUSER:$GITTOKEN@github.com/$GITUSER/EngineGP.git)
 https://github.com/MaXa0H/EngineGP.git
