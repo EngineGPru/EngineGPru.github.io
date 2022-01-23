@@ -42,12 +42,13 @@ PHPVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '14p') # Уста
 PMAVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '17p') # Устанавливаемая версия PHPMyAdmin
 PMALINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '20p') # Ссылка на phpMyAdmin
 
-echo "Определение IP-адреса..."
+echo "Определение IP-адреса и задание имени сервера..."
 
 IPADDR=$(echo "${SSH_CONNECTION}" | awk '{print $3}') # Определение IP VDS первым методом
 if [ -z "$IPADDR" ]; then
     IPADDR=$(wget -qO- eth0.me) # Определение IP VDS вторым методом
 fi
+hostname $IPADDR > /dev/null 2>&1
 
 SWP=`free -m | awk '{print $2}' | tail -1` # Определение свободного места в оперативной памяти для создания файла подкачки
 
