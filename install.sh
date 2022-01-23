@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-echo "Инициализация..."
+echo "Инициализация и подготовка системы..."
 
 # Запись логов авто-установщика
 :<<WRITELOG_OFF
@@ -14,6 +14,8 @@ echo "Инициализация..."
     exec  > ${LOG_PIPE}
     exec  2> ${LOG_PIPE}
 WRITELOG_OFF
+
+apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install wget > /dev/null 2>&1
 
 echo "Определение версии операционной системы..."
 
@@ -984,7 +986,7 @@ addREPO() {
 		echo "deb-src http://security.ubuntu.com/ubuntu $(lsb_release -sc)-security universe" >> /etc/apt/sources.list
 		#echo "deb http://security.ubuntu.com/ubuntu $(lsb_release -sc)-security multiverse" >> /etc/apt/sources.list
 		#echo "deb-src http://security.ubuntu.com/ubuntu $(lsb_release -sc)-security multiverse" >> /etc/apt/sources.list
-	elif [ $DISTNAME == "Debian" ]; then
+	elif [ $DISTNAME == "Debian" ] && [ $DISTVER != "11"] ; then
 		echo "deb http://ftp.ru.debian.org/debian/ $(lsb_release -sc) main" > /etc/apt/sources.list
         echo "deb-src http://ftp.ru.debian.org/debian/ $(lsb_release -sc) main" >> /etc/apt/sources.list
         echo "deb http://security.debian.org/ $(lsb_release -sc)/updates main" >> /etc/apt/sources.list
@@ -1000,7 +1002,7 @@ sysUPDATE() {
 }
 # Обновление пакетов
 sysUPGRADE() {
-	apt -y --force-yes upgrade > /dev/null 2>&1
+	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade > /dev/null 2>&1
 }
 # Добавление файла подкачки
 swapADD() {
