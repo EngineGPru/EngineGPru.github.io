@@ -18,47 +18,33 @@ WRITELOG_OFF
 echo "Определение версии операционной системы..."
 
 # Определение версии ОС и задание переменной для избирания нужных команд
-VER=`cat /etc/issue.net | awk '{print $1$3}'`
-case $(head -n1 /etc/issue | cut -f 1 -d ' ') in
-    Debian)     type="deb" ;;
-    Ubuntu)     type="ubn" ;;
-    *)          type="rhl" ;;
-esac
-
-if [ $type = "rhl" ]; then
-	echo "Подготовка системы..."
-	yum -y install wget
+DISTNAME=`cat /etc/issue.net | awk '{print $1}'` # Название дистрибутива
+DISTVER=`cat /etc/issue.net | awk '{print $3}'` # Версия дистрибутива (Debian)
+if [ "$DISTNAME" == "Ubuntu" ]; then
+    DISTVER=`cat /etc/issue.net | awk '{print $2}'` # Версия дистрибутива (Ubuntu)
 fi
 
 DOMAIN="https://enginegp.ru" # Основной домен для работы
-SHVER="2.0.1" # Версия установщика
+SHVER="2.02" # Версия установщика
 
 echo "Получение данных с сервера..."
 
 # GitHub
-#GITUSER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '39p') # Логин для доступа к приватному репозиторию EngineGP (пока не используется)
-#GITTOKEN=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '42p') # Токен для доступа к приватному репозиторию EngineGP (пока не используется)
-GITLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '45p') # Ссылка для клонирования репозитория
-GITREQLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '48p') # Ссылка для клонирования репозитория с надстройками
+GITLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '30p') # Ссылка для клонирования репозитория
+GITREQLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '33p') # Ссылка для клонирования репозитория с надстройками
 
 # Получение переменных с сервера
 LASTSHVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '2p')  # Последняя доступная версия установщика
 GAMES=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '11p')  # Адрес репозитория игр
 PHPVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '14p') # Устанавливаемая версия PHP
-PMAVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '32p') # Устанавливаемая версия PHPMyAdmin
-PMALINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '35p') # Ссылка на phpMyAdmin
-SQLAPTVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '26p') # Устанавливаемая версия MySQL-apt
-SQLLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '29p') # Ссылка на MySQL-apt
-SQLVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '23p') # Устанавливаемая версия MySQL
+PMAVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '17p') # Устанавливаемая версия PHPMyAdmin
+PMALINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '20p') # Ссылка на phpMyAdmin
 
 echo "Определение IP-адреса..."
 
 IPADDR=$(echo "${SSH_CONNECTION}" | awk '{print $3}') # Определение IP VDS первым методом
-if [ "empty$IPADDR" = "empty" ] || [ "empty" = "empty$IPADDR" ]; then
-	IPADDR=$(wget -qO- eth0.me) # Определение IP VDS вторым методом
-	if [ "empty$IPADDR" = "empty" ] || [ "empty" = "empty$IPADDR" ]; then
-		IPADDR="ErrorIP"
-	fi
+if [ -z "$IPADDR" ]; then
+    IPADDR=$(wget -qO- eth0.me) # Определение IP VDS вторым методом
 fi
 
 SWP=`free -m | awk '{print $2}' | tail -1` # Определение свободного места в оперативной памяти для создания файла подкачки
@@ -98,14 +84,14 @@ log_n() {
 }
 log_t() {
     log_s
-    Info "- - - $@"
+    Info "$@"
     log_s
 }
 
 # Установка EngineGP
 install_enginegp() {
     clear
-    log_t "Start Install EngineGP/Detected OS Version: "$VER
+    log_t "Start Install EngineGP/Detected OS Version: "$DISTNAME" "$DISTVER
     echo -en "(${NUMS}/${PIMS}) Install packages..."
         necPACK
         addREPO
@@ -201,7 +187,7 @@ install_enginegp() {
 # Установка EngineGP + Настройка локации
 install_enginegp_location() {
     clear
-    log_t "Start Install And Setting/Detected OS Version: "$VER
+    log_t "Start Install And Setting/Detected OS Version: "$DISTNAME" "$DISTVER
     echo -en "(${NUMS}/${PLAI}) Install packages..."
         necPACK
         addREPO
@@ -329,12 +315,12 @@ install_enginegp_location() {
     Error_n "Данные для входа, можно посмотреть в файле: /root/enginegp.cfg"
     Error_n "Так-же, там хранится необходимое действие для работы панели!"
     log_n "======================================================================"
-	menu_finish
+	menu_location_setting_finish
 }
 # Настройка локации на чистой машине
 setting_location() {
     clear
-    log_t "Setting location/Detected OS Version: "$VER
+    log_t "Setting location/Detected OS Version: "$DISTNAME" "$DISTVER
     echo -en "(${NUMS}/${LSMS}) Install packages..."
         necPACK
         addREPO
@@ -414,12 +400,12 @@ setting_location() {
     log_n "=============== Настройка локации успешно завершена ==============="
     Error_n "Все данные, можно посмотреть в файле: /root/enginegp.cfg"
     log_n "==================================================================="
-	menu_finish
+	menu_location_setting_finish
 }
 # Настройка локации на сервере с EngineGP
 setting_location_enginegp() {
 	clear
-	log_t "Setting location/Detected OS Version: "$VER
+	log_t "Setting location/Detected OS Version: "$DISTNAME" "$DISTVER
     echo -en "(${NUMS}/${LSFE}) Setting server..."
         readMySQL
         varLOCATION
@@ -474,7 +460,7 @@ setting_location_enginegp() {
     log_n "=============== Настройка локации успешно завершена ==============="
     Error_n "Все данные, можно посмотреть в файле: /root/enginegp.cfg"
     log_n "==================================================================="
-	menu_finish
+	menu_location_setting_finish
 }
 
 # Меню установки игр
@@ -975,15 +961,11 @@ infoStats() {
 }
 # Установка обязательных пакетов
 necPACK() {
-	if [ $type = "deb" ] || [ $type = "ubn" ]; then
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install git lsb-release apt-utils > /dev/null 2>&1
-	elif [ $type = "rhl" ]; then
-		yum -y install redhat-lsb-core yum-utils epel-release wget git
-	fi
+	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install git lsb-release apt-utils > /dev/null 2>&1
 }
 # Добавление репозиториев
 addREPO() { 
-	if [ $type = "ubn" ]; then
+	if [ $DISTNAME == "Ubuntu" ]; then
 		echo "deb http://archive.ubuntu.com/ubuntu/ $(lsb_release -sc) main restricted universe multiverse" >> /etc/apt/sources.list
         echo "deb-src http://archive.ubuntu.com/ubuntu/ $(lsb_release -sc) main restricted universe multiverse" >> /etc/apt/sources.list
         echo "deb http://archive.ubuntu.com/ubuntu/ $(lsb_release -sc)-security main restricted universe multiverse" >> /etc/apt/sources.list
@@ -1002,39 +984,23 @@ addREPO() {
 		echo "deb-src http://security.ubuntu.com/ubuntu $(lsb_release -sc)-security universe" >> /etc/apt/sources.list
 		#echo "deb http://security.ubuntu.com/ubuntu $(lsb_release -sc)-security multiverse" >> /etc/apt/sources.list
 		#echo "deb-src http://security.ubuntu.com/ubuntu $(lsb_release -sc)-security multiverse" >> /etc/apt/sources.list
-	elif [ $type = "deb" ]; then
-	#if [ $VER != "Debian11" ]; then
+	elif [ $DISTNAME == "Debian" ]; then
 		echo "deb http://ftp.ru.debian.org/debian/ $(lsb_release -sc) main" > /etc/apt/sources.list
         echo "deb-src http://ftp.ru.debian.org/debian/ $(lsb_release -sc) main" >> /etc/apt/sources.list
         echo "deb http://security.debian.org/ $(lsb_release -sc)/updates main" >> /etc/apt/sources.list
         echo "deb-src http://security.debian.org/ $(lsb_release -sc)/updates main" >> /etc/apt/sources.list
         echo "deb http://ftp.ru.debian.org/debian/ $(lsb_release -sc)-updates main" >> /etc/apt/sources.list
         echo "deb-src http://ftp.ru.debian.org/debian/ $(lsb_release -sc)-updates main" >> /etc/apt/sources.list
-	elif [ $type = "rhl" ]; then
-		yum -y install https://rpms.remirepo.net/enterprise/remi-release-8.rpm
-		wget -y --force-yes https://download-ib01.fedoraproject.org/pub/epel/8/Everything/x86_64/Packages/p/pwgen-2.08-3.el8.x86_64.rpm
-		rpm -Uvh pwgen-2.08-3.el8.x86_64.rpm
-		wget https://download-ib01.fedoraproject.org/pub/epel/8/x86_64/Packages/q/qstat-2.11-13.20080912svn311.el7.x86_64.rpm ## ССЫЛКА СДОХЛА!
-		rpm -Uvh qstat-2.11-13.20080912svn311.el7.x86_64.rpm ## ЭТО СООТВЕТСТВЕННО ТОЖЕ НЕ ВСТАНЕТ
     fi
     git clone $GITREQLINK > /dev/null 2>&1
 }
 # Получение списка пакетов с репозитория
 sysUPDATE() {
-	if [ $type = deb ] || [ $type = ubn ]; then
-		apt -y --force-yes update $something > /dev/null 2>&1
-	elif [ $type = "rhl" ]; then
-		yum -y check-update
-		yum -y update
-	fi
+	apt -y --force-yes update > /dev/null 2>&1
 }
 # Обновление пакетов
 sysUPGRADE() {
-	if [ $type = deb ] || [ $type = ubn ]; then
-		apt -y --force-yes upgrade $something > /dev/null 2>&1
-	elif [ $type = "rhl" ]; then
-		yum -y upgrade
-	fi
+	apt -y --force-yes upgrade > /dev/null 2>&1
 }
 # Добавление файла подкачки
 swapADD() {
@@ -1047,21 +1013,11 @@ swapADD() {
 }
 # Популярные пакеты
 popPACK() {
-	if [ $type = deb ] || [ $type = ubn ]; then
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install pwgen dialog sudo bc lib32z1 screen htop nano tcpdump zip unzip mc lsof apt-transport-https ca-certificates safe-rm > /dev/null 2>&1
-	elif [ $type = "rhl" ]; then
-		yum -y install pwgen htop screen dialog sudo bc net-tools bash-completion curl vim nano tcpdump zip unzip mc lsof
-	fi
+	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install pwgen dialog sudo bc lib32z1 screen htop nano tcpdump zip unzip mc lsof apt-transport-https ca-certificates safe-rm > /dev/null 2>&1
 }
 # Пакеты для работы панели
 packPANEL() {
-	if [ $type = deb ] || [ $type = ubn ]; then
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install cron curl ssh nload gdb lsof qstat > /dev/null 2>&1
-	elif [ $type = "rhl" ]; then
-		yum -y install qstat crontabs openssh-clients openssh-server nload gdb
-		yum -y install nginx
-		yum install mariadb-server mariadb
-	fi
+	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install cron curl ssh nload gdb lsof qstat > /dev/null 2>&1
 }
 # Популярные переменные
 varPOP() {
@@ -1080,46 +1036,36 @@ varPANEL() {
 }
 # Подготовка к установке MySQL
 setMYSQL() {
-	if [ $type = deb ] || [ $type = ubn ]; then
-		wget $SQLLINK > /dev/null 2>&1
-		export DEBIAN_FRONTEND=noninteractive > /dev/null 2>&1
-		echo mysql-apt-config mysql-apt-config/select-server select mysql-$SQLVER | debconf-set-selections > /dev/null 2>&1
-		echo mysql-apt-config mysql-apt-config/select-product select Ok | debconf-set-selections > /dev/null 2>&1
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install ./$SQLAPTVER.deb > /dev/null 2>&1
-		dpkg -i $SQLAPTVER.deb > /dev/null 2>&1
-		echo mysql-community-server mysql-community-server/root-pass password "$MYSQLPASS" | debconf-set-selections > /dev/null 2>&1
-		echo mysql-community-server mysql-community-server/re-root-pass password "$MYSQLPASS" | debconf-set-selections > /dev/null 2>&1
-		mkdir /resegp > /dev/null 2>&1
-		echo "$MYSQLPASS" >> /resegp/conf.cfg
-		rm $SQLAPTVER.deb > /dev/null 2>&1
-	elif [ $type = "rhl" ]; then
-		yum install mariadb-server mariadb
-	fi
+    mkdir /resegp > /dev/null 2>&1
+    echo "$MYSQLPASS" >> /resegp/conf.cfg
+}
+# Установка MySQL
+installMYSQL() {
+	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install mariadb-server > /dev/null 2>&1
+	sudo mysql -u root -p$MYSQLPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQLPASS';" > /dev/null 2>&1 | grep -v "Using a password on the command"
+	sudo mysql -u root -p$MYSQLPASS -e "FLUSH PRIVILEGES;" > /dev/null 2>&1 | grep -v "Using a password on the command"
+    service mysql stop > /dev/null 2>&1
+    service mysql start > /dev/null 2>&1
 }
 # Добавление PHP
 addPHP() {
 	# Для Debian
-	if [ $type = deb ]; then
+	if [ $DISTNAME == "Debian" ]; then
 		wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg > /dev/null 2>&1
 		sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' > /dev/null 2>&1
-	fi
+	elif [ $DISTNAME == "Ubuntu" ]; then
+        apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install software-properties-common > /dev/null 2>&1
+		add-apt-repository -y ppa:ondrej/php > /dev/null 2>&1
+    fi
 }
 # Установка PHP
 installPHP() {
-	if [ ubn = $type ] || [ ubn = $type ]; then
-		if [ $PHPVER = "7.4" ] || [ "7.4" = $PHPVER ]; then
-			PHPVER=""
-		else
-			apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install software-properties-common > /dev/null 2>&1
-			add-apt-repository ppa:ondrej/php > /dev/null 2>&1
-		fi
-	fi
 	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install php$PHPVER > /dev/null 2>&1
 }
 # Установка пакетов PHP
 installPHPPACK() {
     apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install php$PHPVER-cli php$PHPVER-common php$PHPVER-curl php$PHPVER-mbstring php$PHPVER-mysql php$PHPVER-xml php$PHPVER-memcache php$PHPVER-memcached memcached php$PHPVER-gd php$PHPVER-zip php$PHPVER-ssh2 > /dev/null 2>&1
-    mv EngineGP-requirements/php/php /etc/php/$PHPVER/apache2/php.ini > /dev/null 2>&1
+	mv EngineGP-requirements/php/php /etc/php/$PHPVER/apache2/php.ini > /dev/null 2>&1
 }
 # Установка Apache
 installAPACHE() {
@@ -1154,21 +1100,9 @@ serPANELRES() {
     a2enmod php$PHPVER > /dev/null 2>&1
     service apache2 restart > /dev/null 2>&1
 }
-# Установка MySQL
-installMYSQL() {
-	if [ $type = deb ] || [ $type = ubn ]; then
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install mysql-server > /dev/null 2>&1
-		## Для Ubuntu + MySQL 5.7 и выше
-		if [ $type = ubn ]; then
-		mysql -u root -p$MYSQLPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQLPASS';" > /dev/null 2>&1 | grep -v "Using a password on the command"
-		fi
-	elif [ $type = "rhl" ]; then
-		yum install mariadb-server mariadb -y
-	fi
-}
 # Настройка phpMyAdmin
 setPMA() {
-    if [ $VER = "Debian9" ]; then
+    if [ $DISTNAME == "Debian" ] && [ $DISTVER == "9" ]; then
         echo "phpmyadmin phpmyadmin/dbconfig-install boolean true" | debconf-set-selections > /dev/null 2>&1
         echo "phpmyadmin phpmyadmin/mysql/admin-user string root" | debconf-set-selections > /dev/null 2>&1
         echo "phpmyadmin phpmyadmin/mysql/admin-pass password $MYSQLPASS" | debconf-set-selections > /dev/null 2>&1
@@ -1267,12 +1201,7 @@ setTIMEPANEL() {
 }
 # Перезагрузка MySQL
 serMYSQLRES() {
-	if [ ubn = $type ] || [ ubn = $type ]; then
-		service mysql restart > /dev/null 2>&1
-	elif [ $type = "rhl" ]; then
-		systemctl start mariadb
-		systemctl enable mariadb
-	fi
+	service mysql restart > /dev/null 2>&1
 }
 # Создание переменных локации
 varLOCATION() {
@@ -1370,43 +1299,64 @@ readMySQL() {
     MYSQLPASS=`cat /resegp/conf.cfg | awk '{print $1}'`
     SAVE='/root/enginegp.cfg'
 }
-
+# Переустановка EngineGP
+reinstall() {
+	echo " Sorry, but this installer version cant reinstall EngineGP"
+	echo " Please, check new version on our site: EngineGP.RU"
+	echo " К сожалению, в данной версии установщика эта функция не реализована"
+	echo " Пожалуйста, проверьте наличие новой версии на сайте EngineGP.RU"
+}
+# Удаление всех пакетов, файлов и игр, связанных с EngineGP
+delete_all() {
+    rm -r /servers # Удаление папки с игровыми серверами
+	rm -r /path # Удаление папки с игровыми сборками
+	rm -r /var/enginegp # Удаление панели
+	rm -r /root # Удаление временных файлов и пользовательских данных
+	apt autoremove git lsb-release apt-utils pwgen dialog sudo bc lib32z1 screen htop nano tcpdump zip unzip mc lsof apt-transport-https ca-certificates safe-rm cron curl ssh nload gdb lsof qstat mysql-community-server mysql-server mysql-apt-config php$PHPVER php$PHPVER-cli php$PHPVER-common php$PHPVER-curl php$PHPVER-mbstring php$PHPVER-mysql php$PHPVER-xml php$PHPVER-memcache php$PHPVER-memcached memcached php$PHPVER-gd php$PHPVER-zip php$PHPVER-ssh2 apache2 phpmyadmin java libbabeltrace1 libc6-dbg libdw1 lib32stdc++6 libreadline5 ssh qstat gdb-minimal lib32gcc1 ntpdate lsof safe-rm htop mc i386 gcc-multilib proftpd-basic proftpd-mod-mysql nginx
+}
 # Главное навигационное меню
 menu() {
     clear
-    log_t "Добро пожаловать в установочное меню EngineGP"
-    Info "- 1 - Меню установки EngineGP"
-    Info "- 2 - Меню настройки локации"
-    Info "- 3 - Установить игры"
-    Info "- 0 - Выход"
+    log_t "Welcome! Добро пожаловать! Версия установщика: $SHVER"
+    Info "- 1 - Panel installing || Установка панели"
+    Info "- 2 - Location setting || Настройка локации"
+    Info "- 3 - Games downloading || Скачивание игр"
+	Info "- 4 - Reinstalling (testing) || Переустановка (тестируется)"
+	Info "- 5 - Delete all without saving || Удалить всё (тестируется)"
+    Info "- 0 - Exit || Выход"
 	Info ""
-	Info " Версия установщика: $SHVER"
-	Info " Последняя доступная версия: $LASTSHVER"
+	
+	if [ $(echo "$LASTSHVER $SHVER" | awk '{print $1*100 - $2*100}') -gt 0 ]; then
+		Info " New version is available || Доступна новая версия: $LASTSHVER"
+	fi
+	
 	Info ""
-	Info " < Информация о системе >"
-	Info " Операционная система: $VER"
-	Info " IP-адрес: $IPADDR"
+	Info " < System information || Информация о системе >"
+	Info " Operation system || Операционная система: $DISTNAME $DISTVER"
+	Info " IP-address || IP-адрес: $IPADDR"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item || Выберите пункт меню: " case
 
     case $case in
         1) menu_install_enginegp;;   
         2) menu_setting_location;;   
         3) install_games;;
+		4) menu_reinstall;;
+		5) menu_delete_all;;
         0) exit;;
     esac
 }
 # Меню установки EngineGP
 menu_install_enginegp() {
     clear
-    log_t "Добро пожаловать в меню установки EngineGP"
-    Info "- 1 - Установка EngineGP [Без настройки локации]"
-    Info "- 2 - Установка EngineGP [С настройкой локации]"
-    Info "- 0 - Назад"
+    log_t "EngineGP installing || Установка EngineGP"
+    Info "- 1 - Install panel only || Установить только панель"
+    Info "- 2 - Install panel and set location || Установить панель и настроить локацию"
+    Info "- 0 - Back to main || Вернуться в главное меню"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item || Выберите пункт меню: " case
 
     case $case in
         1) install_enginegp;;
@@ -1414,16 +1364,16 @@ menu_install_enginegp() {
         0) menu;;
     esac
 }
-# Меню установки EngineGP
+# Меню настройки локации
 menu_setting_location() {
     clear
-    log_t "Добро пожаловать в меню настройки локации"
-    Info "- 1 - Настройка локации [На чистый сервер]"
-    Info "- 2 - Настройка локации [На сервер с EngineGP]"
+    log_t "EngineGP location set || Настройка локации"
+    Info "- 1 - Set location on clean server || Настройка локации на чистом сервере"
+    Info "- 2 - Set location on EngineGP || Настройка локации на EngineGP"
     Info "- 0 - Назад"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item || Выберите пункт меню: " case
 
     case $case in
         1) setting_location;;
@@ -1432,39 +1382,79 @@ menu_setting_location() {
     esac
 }
 # Меню после настройки локации
-menu_finish() {
-    log_t "Хотите установить сборки для игр сейчас?"
-    Info "- 1 - Да, перейти в меню установки игр"
-    Info "- 2 - Нет, выйти из установки"
-    Info "- 0 - Вернуться в главное меню"
+menu_location_setting_finish() {
+    log_t "Do you want to install games? || Хотите установить сборки для игр?"
+    Info "- 1 - Yes, go to games manager || Да, перейти в менеджер игр"
+    Info "- 2 - No, exit || Нет, выйти из установки"
+    Info "- 0 - Go back to main menu || Вернуться в главное меню"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item || Выберите пункт меню: " case
 
     case $case in
         1) install_games;;
         0) menu;;
     esac
 }
+# Подтверждение переустановки
+menu_reinstall() {
+	clear
+	log_t "Sure? All files will be lost, include your personal!\n- - - OS reinstalling recommended for restoring to the factory state"
+    log_t "Вы уверены? Будут удалены абсолютно все файлы, в т.ч. ваши личные!\n- - - Для отката к заводскому состоянию рекомендутся полностью переустановить ОС"
+    Info "- 1 - Yes, reinstall || Да, переустановить"
+    Info "- 0 - No, i changed my mind || Нет, я передумал"
+    log_s
+    Info
+    read -p "Choose menu item || Выберите пункт меню: " case
+
+    case $case in
+        1) reinstall;;
+        0) menu;;
+    esac
+}
+# Подтверждение удаления
+menu_delete_all() {
+	clear
+	log_t "Sure? All files will be lost, include your personal!\n- - - OS reinstalling recommended for restoring to the factory state"
+    log_t "Вы уверены? Будут удалены абсолютно все файлы, в т.ч. ваши личные!\n- - - Для отката к заводскому состоянию рекомендутся полностью переустановить ОС"
+    Info "- 1 - Yes, delete all || Да, удалить"
+    Info "- 0 - No, i changed my mind || Нет, я передумал"
+    log_s
+    Info
+    read -p "Choose menu item || Выберите пункт меню: " case
+
+    case $case in
+        1) delete_all;;
+        0) menu;;
+    esac
+}
 
 connection_check() {
-	if [ "empty$PHPVER" != "empty" ] || [ "empty" != "empty$PHPVER" ]; then
-	  os_version_check
-	 else
-	  clear
-	  echo " Ошибка соединения с сервером!"
-	  tput sgr0
+    if [ -z "$LASTSHVER"]; then
+	    clear
+		echo ""
+	    echo " Server connection error!"
+		echo ""
+	    echo " Ошибка соединения с сервером!"
+	    tput sgr0
+	else
+	    os_version_check
 	fi
 }
 
 os_version_check() {
-if [ $type = deb ] || [ $type = ubn ] || [ $type = rhl ]; then
-  clear
-  menu
- else
-  echo " Данная ОС временно не поддерживается!"
-  tput sgr0
-fi
+    if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+        clear
+        menu
+    else
+        echo ""
+        echo " Sorry, but this Linux version is not currently supported"
+        echo " Please, check new version on our site: EngineGP.RU"
+		echo ""
+        echo " Данная версия установщика не поддерживает установленную ОС"
+        echo " Пожалуйста, проверьте наличие новой версии на сайте EngineGP.RU"
+        tput sgr0
+    fi
 }
 
 connection_check
