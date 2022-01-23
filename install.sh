@@ -32,6 +32,8 @@ SHVER="2.02" # Версия установщика
 echo "Получение данных с сервера..."
 
 # GitHub
+#GITUSER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '39p') # Логин для доступа к приватному репозиторию EngineGP (пока не используется)
+#GITTOKEN=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '42p') # Токен для доступа к приватному репозиторию EngineGP (пока не используется)
 GITLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '30p') # Ссылка для клонирования репозитория
 GITREQLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '33p') # Ссылка для клонирования репозитория с надстройками
 
