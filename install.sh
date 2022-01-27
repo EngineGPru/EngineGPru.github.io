@@ -1,7 +1,7 @@
 #!/bin/bash
 
 clear
-echo "Инициализация и подготовка системы..."
+echo "Initaization..."
 
 # Запись логов авто-установщика
 :<<WRITELOG_OFF
@@ -15,51 +15,57 @@ echo "Инициализация и подготовка системы..."
     exec  2> ${LOG_PIPE}
 WRITELOG_OFF
 
-apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install wget > /dev/null 2>&1
-
-echo "Определение версии операционной системы..."
-
-# Определение версии ОС и задание переменной для избирания нужных команд
+echo "Obtaining operation system version..."
+# Определение ОС и ее версии, а также задание переменной для избирания нужных команд
 DISTNAME=`cat /etc/issue.net | awk '{print $1}'` # Название дистрибутива
-DISTVER=`cat /etc/issue.net | awk '{print $3}'` # Версия дистрибутива (Debian)
-if [ "$DISTNAME" == "Ubuntu" ]; then
+if [ "$DISTNAME" == "Debian" ]; then
+    DISTVER=`cat /etc/issue.net | awk '{print $3}'` # Версия дистрибутива (Debian)
+elif [ "$DISTNAME" == "Ubuntu" ]; then
     DISTVER=`cat /etc/issue.net | awk '{print $2}'` # Версия дистрибутива (Ubuntu)
 fi
 
-DOMAIN="https://enginegp.ru" # Основной домен для работы
-SHVER="2.02" # Версия установщика
+echo "Preparing operation system..."
+if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install wget > /dev/null 2>&1
+elif [ $DISTNAME == "CentOS" ]; then
+	yum -y install wget
+fi
 
-echo "Получение данных с сервера..."
+DOMAIN="https://enginegp.ru" # Основной домен для работы
+SHVER="2.03" # Версия установщика
+
+echo "Getting data from the server..."
 
 # GitHub
-#GITUSER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '39p') # Логин для доступа к приватному репозиторию EngineGP (пока не используется)
-#GITTOKEN=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '42p') # Токен для доступа к приватному репозиторию EngineGP (пока не используется)
+#GITUSER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n 'p') # Username для доступа к приватному репозиторию EngineGP (пока не используется)
+#GITTOKEN=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n 'p') # Токен для доступа к приватному репозиторию EngineGP (пока не используется)
 GITLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '30p') # Ссылка для клонирования репозитория
 GITREQLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '33p') # Ссылка для клонирования репозитория с надстройками
 
 # Получение переменных с сервера
 LASTSHVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '2p')  # Последняя доступная версия установщика
-GAMES=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '11p')  # Адрес репозитория игр
+GAMES=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '11p')  # Address репозитория игр
 PHPVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '14p') # Устанавливаемая версия PHP
 PMAVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '17p') # Устанавливаемая версия PHPMyAdmin
 PMALINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '20p') # Ссылка на phpMyAdmin
 
-echo "Определение IP-адреса и задание имени сервера..."
+echo "Obtaining IP-address..."
 
 IPADDR=$(echo "${SSH_CONNECTION}" | awk '{print $3}') # Определение IP VDS первым методом
 if [ -z "$IPADDR" ]; then
-    IPADDR=$(wget -qO- eth0.me) # Определение IP VDS вторым методом
+	IPADDR=$(wget -qO- eth0.me) # Определение IP VDS вторым методом
+	if [ -z "$IPADDR" ]; then
+		IPADDR="ErrorIP"
+	fi
 fi
 hostname $IPADDR > /dev/null 2>&1
 
 SWP=`free -m | awk '{print $2}' | tail -1` # Определение свободного места в оперативной памяти для создания файла подкачки
 
-echo "Запуск программы установки..."
-
 HOSTBIRTHDAY=`date +%s` # Дата установки панели
 
 NUMS=1 # Счетчик всегда начинается с единицы
-NUML=4 # Магическое число, НЕ ТРОГАТЬ!
+NUML=4 # Отступ
 PIMS=22 # Количество этапов установки EngineGP без настройки локации
 LSMS=22 # Количество этапов настройки только локации
 PLAI=31 # Количество этапов установки EngineGP и настройки локации
@@ -97,249 +103,251 @@ log_t() {
 install_enginegp() {
     clear
     log_t "Start Install EngineGP/Detected OS Version: "$DISTNAME" "$DISTVER
-    echo -en "(${NUMS}/${PIMS}) Install packages..."
+    echo -en "(${NUMS}/${PIMS}) Repositories adding"
         necPACK
         addREPO
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Update packages..."
+    echo -en "(${NUMS}/${PIMS}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Upgrade system..."
+    echo -en "(${NUMS}/${PIMS}) System and packages upgrading"
         sysUPGRADE
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Adding swap..."
+    echo -en "(${NUMS}/${PIMS}) Checking and adding swap"
         swapADD
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Install packages..."
+    echo -en "(${NUMS}/${PIMS}) Repositories adding"
         popPACK
         packPANEL
         varPOP
         varPANEL
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Adding php$PHPVER... "
+    echo -en "(${NUMS}/${PIMS}) Adding PHP$PHPVER repositories"
         addPHP
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Update packages..."
+    echo -en "(${NUMS}/${PIMS}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Install php$PHPVER..."
+    echo -en "(${NUMS}/${PIMS}) PHP$PHPVER installing"
         installPHP
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Install php$PHPVER modules..."
+    echo -en "(${NUMS}/${PIMS}) PHP$PHPVER modules installing"
         installPHPPACK
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Install apache2..."
+    echo -en "(${NUMS}/${PIMS}) Apache2 installing"
         installAPACHE
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Setting apache2..."
+    echo -en "(${NUMS}/${PIMS}) Apache2 setting"
         setAPACHE
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Service restart..."
+    echo -en "(${NUMS}/${PIMS}) Services restarting"
         serPANELRES
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Adding MySQL... "
+    echo -en "(${NUMS}/${PIMS}) MySQL$SQLVER repositories adding"
         setMYSQL
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Update packages..."
+    echo -en "(${NUMS}/${PIMS}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Install MySQL$SQLVER..."
+    echo -en "(${NUMS}/${PIMS}) MySQL$SQLVER installing"
         installMYSQL
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Install phpMyAdmin..."
+    echo -en "(${NUMS}/${PIMS}) PHPMyAdmin installing"
         setPMA
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Setting cron..."
+    echo -en "(${NUMS}/${PIMS}) CRON setting"
         setCRON
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Restart cron..."
+    echo -en "(${NUMS}/${PIMS}) CRON restarting"
         serCRONRES
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Download EngineGP..."
+    echo -en "(${NUMS}/${PIMS}) EngineGP resources downloading"
         dwnPANEL
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Install EngineGP..."
+    echo -en "(${NUMS}/${PIMS}) EngineGP installing"
         installPANEL
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Setting time..."
+    echo -en "(${NUMS}/${PIMS}) Time and date setting"
         setTIMEPANEL
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Service restart..."
+    echo -en "(${NUMS}/${PIMS}) Services restarting"
         serPANELRES
         serMYSQLRES
         infoStats
-    echo "Данные для входа в EngineGP:">>$SAVE
-    echo "Адрес: http://$IPADDR/">>$SAVE
-    echo "Логин: root">>$SAVE
-    echo "Пароль: $ENGINEGPPASS">>$SAVE
+    echo "Panel authorization:">>$SAVE
+    echo "Address: http://$IPADDR/">>$SAVE
+    echo "Username: root">>$SAVE
+    echo "Password: $ENGINEGPPASS">>$SAVE
     echo "">>$SAVE
-    echo "Данные для входа в MySQL:">>$SAVE
-    echo "Логин: root">>$SAVE
-    echo "Пароль: $MYSQLPASS">>$SAVE
+    echo "SQL authorization:">>$SAVE
+    echo "Username: root">>$SAVE
+    echo "Password: $SQLPASS">>$SAVE
     echo "">>$SAVE
     echo "">>$SAVE
-    echo "Обязательные действия:">>$SAVE
-    echo "1. Авторизируйтесь в phpMyAdmin: http://$IPADDR/phpmyadmin">>$SAVE
-    echo "2. Перейдите в базу данных: enginegp">>$SAVE
-    echo "3. Найдите и откройте таблицу: panel">>$SAVE
-    echo "4. Вместо «ROOTPASSWORD», введите пароль от сервера, на котором установлена EngineGP.">>$SAVE
-    log_n "================ Установка EngineGP успешно завершена ==============="
-    Error_n "Ссылка на EngineGP: http://$IPADDR"
-    Error_n "Данные для входа, можно посмотреть в файле: /root/enginegp.cfg"
-    Error_n "Так-же, там хранится необходимое действие для работы панели!"
+    echo "After installing you need:">>$SAVE
+    echo "1. Open PHPMyAdmin: http://$IPADDR/phpmyadmin">>$SAVE
+    echo "2. Open database with name: enginegp">>$SAVE
+    echo "3. Open table with name: panel">>$SAVE
+    echo "4. Put password for root user into «ROOTPASSWORD»">>$SAVE
+    log_n "================ EngineGP installed successfully ==============="
+    Error_n "Panel address: http://$IPADDR"
+    Error_n "All data was written to: /root/enginegp.cfg"
+    Error_n "Also there is instruction for installing finish!"
     log_n "======================================================================"
 }
+
 # Установка EngineGP + Настройка локации
 install_enginegp_location() {
     clear
     log_t "Start Install And Setting/Detected OS Version: "$DISTNAME" "$DISTVER
-    echo -en "(${NUMS}/${PLAI}) Install packages..."
+    echo -en "(${NUMS}/${PLAI}) Repositories adding"
         necPACK
         addREPO
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Update packages..."
+    echo -en "(${NUMS}/${PLAI}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Upgrade system..."
+    echo -en "(${NUMS}/${PLAI}) System and packages upgrading"
         sysUPGRADE
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Adding swap..."
+    echo -en "(${NUMS}/${PLAI}) Checking and adding swap"
         swapADD
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install packages..."
+    echo -en "(${NUMS}/${PLAI}) Repositories adding"
         popPACK
         packPANEL
         varPOP
         varPANEL
         varLOCATION
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Adding php$PHPVER... "
+    echo -en "(${NUMS}/${PLAI}) Adding PHP$PHPVER repositories"
         addPHP
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Update packages..."
+    echo -en "(${NUMS}/${PLAI}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install php$PHPVER..."
+    echo -en "(${NUMS}/${PLAI}) PHP$PHPVER installing"
         installPHP
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install php$PHPVER modules..."
+    echo -en "(${NUMS}/${PLAI}) PHP$PHPVER modules installing"
         installPHPPACK
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install apache2..."
+    echo -en "(${NUMS}/${PLAI}) Apache2 installing"
         installAPACHE
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Setting apache2..."
+    echo -en "(${NUMS}/${PLAI}) Apache2 setting"
         setAPACHE
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Service restart..."
+    echo -en "(${NUMS}/${PLAI}) Services restarting"
         serPANELRES
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Adding MySQL... "
+    echo -en "(${NUMS}/${PLAI}) MySQL$SQLVER repositories adding"
         setMYSQL
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Adding i386..."
+    echo -en "(${NUMS}/${PLAI}) i386 Adding"
         addi386
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Update packages..."
+    echo -en "(${NUMS}/${PLAI}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install MySQL$SQLVER..."
+    echo -en "(${NUMS}/${PLAI}) MySQL$SQLVER installing"
         installMYSQL
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install phpMyAdmin..."
+    echo -en "(${NUMS}/${PLAI}) PHPMyAdmin installing"
         setPMA
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install Java..."
+    echo -en "(${NUMS}/${PLAI}) Java installing"
         installJAVA
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install packages..."
+    echo -en "(${NUMS}/${PLAI}) Repositories adding"
         packLOCATION1
         packLOCATION2
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Setting cron..."
+    echo -en "(${NUMS}/${PLAI}) CRON setting"
         setCRON
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Restart cron..."
+    echo -en "(${NUMS}/${PLAI}) CRON restarting"
         serCRONRES
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Setting rclocal..."
+    echo -en "(${NUMS}/${PLAI}) RCLocal setting"
         setRCLOCAL
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Setting iptables..."
+    echo -en "(${NUMS}/${PLAI}) IPTables setting"
         setIPTABLES
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install nginx..."
+    echo -en "(${NUMS}/${PLAI}) Nginx installing"
         installNGINX
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install proftpd..."
+    echo -en "(${NUMS}/${PLAI}) ProFTPD installing"
         installPROFTPD
         infoStats
     echo -en "(${NUMS}/${PLAI}) Setting configuration..."
         setCONF
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install SteamCMD..."
+    echo -en "(${NUMS}/${PLAI}) SteamCMD installing"
         installSTEAMCMD
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Download EngineGP..."
+    echo -en "(${NUMS}/${PLAI}) EngineGP resources downloading"
         dwnPANEL
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Install EngineGP..."
+    echo -en "(${NUMS}/${PLAI}) EngineGP installing"
         installPANEL
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Setting time..."
+    echo -en "(${NUMS}/${PLAI}) Time and date setting"
         setTIMEPANEL
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Service restart..."
+    echo -en "(${NUMS}/${PLAI}) Services restarting"
         serPANELRES
         serMYSQLRES
         infoStats
-    echo "Данные для входа в EngineGP:">>$SAVE
-    echo "Адрес: http://$IPADDR/">>$SAVE
-    echo "Логин: root">>$SAVE
-    echo "Пароль: $ENGINEGPPASS">>$SAVE
+    echo "Panel authorization:">>$SAVE
+    echo "Address: http://$IPADDR/">>$SAVE
+    echo "Username: root">>$SAVE
+    echo "Password: $ENGINEGPPASS">>$SAVE
     echo "">>$SAVE
-    echo "Данные для входа в MySQL:">>$SAVE
-    echo "Логин: root">>$SAVE
-    echo "Пароль: $MYSQLPASS">>$SAVE
+    echo "SQL authorization:">>$SAVE
+    echo "Username: root">>$SAVE
+    echo "Password: $SQLPASS">>$SAVE
     echo "">>$SAVE
     echo "">>$SAVE
-    echo "Данные для локации:">>$SAVE
-    echo "SQL_Логин: root">>$SAVE
-    echo "SQL_Пароль: $MYSQLPASS">>$SAVE
+    echo "Location data:">>$SAVE
+    echo "SQL_Username: root">>$SAVE
+    echo "SQL_Password: $SQLPASS">>$SAVE
     echo "SQL_FileTP: ftp">>$SAVE
-    echo "SQL_Порт: 3306">>$SAVE
-    echo "Пароль базы данных ftp: $FTPPASS">>$SAVE
+    echo "SQL_Port: 3306">>$SAVE
+    echo "Password for FTP database: $FTPPASS">>$SAVE
     echo "">>$SAVE
-    echo "Обязательные действия:">>$SAVE
-    echo "1. Авторизируйтесь в phpMyAdmin: http://$IPADDR/phpmyadmin">>$SAVE
-    echo "2. Перейдите в базу данных: enginegp">>$SAVE
-    echo "3. Найдите и откройте таблицу: panel">>$SAVE
-    echo "4. Вместо «ROOTPASSWORD», введите пароль от сервера, на котором установлена EngineGP.">>$SAVE
-    log_n "================ Установка EngineGP успешно завершена ==============="
-    Error_n "Ссылка на EngineGP: http://$IPADDR"
-    Error_n "Данные для входа, можно посмотреть в файле: /root/enginegp.cfg"
-    Error_n "Так-же, там хранится необходимое действие для работы панели!"
+    echo "After installing you need:">>$SAVE
+    echo "1. Open PHPMyAdmin: http://$IPADDR/phpmyadmin">>$SAVE
+    echo "2. Open database with name: enginegp">>$SAVE
+    echo "3. Open table with name: panel">>$SAVE
+    echo "4. Put password for root user into «ROOTPASSWORD»">>$SAVE
+    log_n "================ EngineGP installed successfully ==============="
+    Error_n "Panel address: http://$IPADDR"
+    Error_n "All data was written to: /root/enginegp.cfg"
+    Error_n "Also there is instruction for installing finish!"
     log_n "======================================================================"
 	menu_location_setting_finish
 }
+
 # Настройка локации на чистой машине
 setting_location() {
     clear
     log_t "Setting location/Detected OS Version: "$DISTNAME" "$DISTVER
-    echo -en "(${NUMS}/${LSMS}) Install packages..."
+    echo -en "(${NUMS}/${LSMS}) Repositories adding"
         necPACK
         addREPO
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Update packages..."
+    echo -en "(${NUMS}/${LSMS}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Upgrade system..."
+    echo -en "(${NUMS}/${LSMS}) System and packages upgrading"
         sysUPGRADE
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Adding swap..."
+    echo -en "(${NUMS}/${LSMS}) Checking and adding swap"
         swapADD
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Install packages..."
+    echo -en "(${NUMS}/${LSMS}) Repositories adding"
         popPACK
         varPOP
         varLOCATION
@@ -347,66 +355,67 @@ setting_location() {
     echo -en "(${NUMS}/${LSMS}) Adding MySQL..."
         setMYSQL
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Update packages..."
+    echo -en "(${NUMS}/${LSMS}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Install MySQL$SQLVER..."
+    echo -en "(${NUMS}/${LSMS}) MySQL$SQLVER installing"
         installMYSQL
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Install Java..."
+    echo -en "(${NUMS}/${LSMS}) Java installing"
         installJAVA
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Update packages..."
+    echo -en "(${NUMS}/${LSMS}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Install packages..."
+    echo -en "(${NUMS}/${LSMS}) Repositories adding"
         packLOCATION1
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Adding i386..."
+    echo -en "(${NUMS}/${LSMS}) i386 Adding"
         addi386
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Update packages..."
+    echo -en "(${NUMS}/${LSMS}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Install packages..."
+    echo -en "(${NUMS}/${LSMS}) Repositories adding"
         packLOCATION2
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Setting rclocal..."
+    echo -en "(${NUMS}/${LSMS}) RCLocal setting"
         setRCLOCAL
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Setting iptables..."
+    echo -en "(${NUMS}/${LSMS}) IPTables setting"
         setIPTABLES
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Install nginx..."
+    echo -en "(${NUMS}/${LSMS}) Nginx installing"
         installNGINX
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Install proftpd..."
+    echo -en "(${NUMS}/${LSMS}) ProFTPD installing"
         installPROFTPD
         infoStats
     echo -en "(${NUMS}/${LSMS}) Setting configuration..."
         setCONF
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Install SteamCMD..."
+    echo -en "(${NUMS}/${LSMS}) SteamCMD installing"
         installSTEAMCMD
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Setting time..."
+    echo -en "(${NUMS}/${LSMS}) Time and date setting"
         setTIME
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Service restart..."
+    echo -en "(${NUMS}/${LSMS}) Services restarting"
         serMYSQLRES
         serLOCATIONRES
         infoStats
-    echo "Данные для локации:">>$SAVE
-    echo "SQL_Логин: root">>$SAVE
-    echo "SQL_Пароль: $MYSQLPASS">>$SAVE
+    echo "Location data:">>$SAVE
+    echo "SQL_Username: root">>$SAVE
+    echo "SQL_Password: $SQLPASS">>$SAVE
     echo "SQL_FileTP: ftp">>$SAVE
-    echo "SQL_Порт: 3306">>$SAVE
-    echo "Пароль базы данных ftp: $FTPPASS">>$SAVE
+    echo "SQL_Port: 3306">>$SAVE
+    echo "Password for FTP database: $FTPPASS">>$SAVE
     log_n "=============== Настройка локации успешно завершена ==============="
     Error_n "Все данные, можно посмотреть в файле: /root/enginegp.cfg"
     log_n "==================================================================="
 	menu_location_setting_finish
 }
+
 # Настройка локации на сервере с EngineGP
 setting_location_enginegp() {
 	clear
@@ -415,53 +424,53 @@ setting_location_enginegp() {
         readMySQL
         varLOCATION
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Install Java..."
+    echo -en "(${NUMS}/${LSFE}) Java installing"
         installJAVA
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Update packages..."
+    echo -en "(${NUMS}/${LSFE}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Install packages..."
+    echo -en "(${NUMS}/${LSFE}) Repositories adding"
         packLOCATION1
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Adding i386..."
+    echo -en "(${NUMS}/${LSFE}) i386 Adding"
         addi386
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Update packages..."
+    echo -en "(${NUMS}/${LSFE}) Packages list updating"
         sysUPDATE
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Install packages..."
+    echo -en "(${NUMS}/${LSFE}) Repositories adding"
         packLOCATION2
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Setting rclocal..."
+    echo -en "(${NUMS}/${LSFE}) RCLocal setting"
         setRCLOCAL
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Setting iptables..."
+    echo -en "(${NUMS}/${LSFE}) IPTables setting"
         setIPTABLES
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Install nginx..."
+    echo -en "(${NUMS}/${LSFE}) Nginx installing"
         installNGINX
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Install proftpd..."
+    echo -en "(${NUMS}/${LSFE}) ProFTPD installing"
         installPROFTPD
         infoStats
     echo -en "(${NUMS}/${LSFE}) Setting configuration..."
         setCONF
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Install SteamCMD..."
+    echo -en "(${NUMS}/${LSFE}) SteamCMD installing"
         installSTEAMCMD
         infoStats
-    echo -en "(${NUMS}/${LSFE}) Service restart..."
+    echo -en "(${NUMS}/${LSFE}) Services restarting"
         serMYSQLRES
         serLOCATIONRES
         infoStats
     echo "">>$SAVE
-    echo "Данные для локации:">>$SAVE
-    echo "SQL_Логин: root">>$SAVE
-    echo "SQL_Пароль: $MYSQLPASS">>$SAVE
+    echo "Location data:">>$SAVE
+    echo "SQL_Username: root">>$SAVE
+    echo "SQL_Password: $SQLPASS">>$SAVE
     echo "SQL_FileTP: ftp">>$SAVE
-    echo "SQL_Порт: 3306">>$SAVE
-    echo "Пароль базы данных ftp: $FTPPASS">>$SAVE
+    echo "SQL_Port: 3306">>$SAVE
+    echo "Password for FTP database: $FTPPASS">>$SAVE
     log_n "=============== Настройка локации успешно завершена ==============="
     Error_n "Все данные, можно посмотреть в файле: /root/enginegp.cfg"
     log_n "==================================================================="
@@ -471,28 +480,28 @@ setting_location_enginegp() {
 # Меню установки игр
 install_games() {
     clear
-    log_t "Install games"
+    log_t "Games manager"
     upd
     clear
-    log_t "Список доступных игр"
+    log_t "Available games now:"
     Info "- 1 - Counter-Strike: 1.6"
-    Info "- 2 - Counter-Strike: Source v34"
-    Info "- 3 - Counter-Strike: Source"
-    Info "- 4 - Counter-Strike: GO"
-    Info "- 5 - GTA: San Andreas Multiplayer"
-    Info "- 6 - GTA: Criminal Russia MP"
-    Info "- 7 - GTA: Multi Theft Auto"
-    Info "- 8 - Minecraft"
-    Info "- 0 - Назад"
+    Info "- 2 - Counter-Strike: Source v34 (old)"
+    Info "- 3 - Counter-Strike: Source (new)"
+    Info "- 4 - Counter-Strike: Global Offensive"
+    Info "- 5 - Grand Theft Auto: San Andreas MultiPlayer"
+    Info "- 6 - Grand Theft Auto: Criminal Russia MultiPlayer"
+    Info "- 7 - Grand Theft Auto: Multi Theft Auto"
+    Info "- 8 - Minecraft PC"
+    Info "- 0 - Back"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item: " case
     
     case $case in
         1)
-            install_csv16;;
+            install_cs;;
         2)
-            install_cssv34;;
+            install_cssold;;
         3)
             install_css;;
         4)
@@ -510,13 +519,13 @@ install_games() {
     esac
 }
 # Меню установки Counter-Strike: 1.6
-install_csv16() {
+install_cs() {
     clear
     log_t "Install Counter-Strike: 1.6"
     upd
     clear
-    log_t "Список доступных версий Counter-Strike: 1.6"
-    Info "- 1 - Steam [ Чистый сервер ]"
+    log_t "Available servers for Counter-Strike: 1.6"
+    Info "- 1 - Steam [Clean server]"
     Info "- 2 - Build ReHLDS"
     Info "- 3 - Build 8308"
     Info "- 4 - Build 8196"
@@ -524,10 +533,10 @@ install_csv16() {
     Info "- 6 - Build 7559"
     Info "- 7 - Build 6153"
     Info "- 8 - Build 5787"
-    Info "- 0 - Назад"
+    Info "- 0 - Back"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1)
@@ -536,7 +545,7 @@ install_csv16() {
             wget $GAMES/cs/steam.zip
             unzip steam.zip
             rm steam.zip
-            install_csv16
+            install_cs
         ;;
         2)
             mkdir -p /path/cs/rehlds
@@ -544,7 +553,7 @@ install_csv16() {
             wget $GAMES/cs/rehlds.zip
             unzip rehlds.zip
             rm rehlds.zip
-            install_csv16
+            install_cs
         ;;
         3)
             mkdir -p /path/cs/8308
@@ -552,7 +561,7 @@ install_csv16() {
             wget $GAMES/cs/8308.zip
             unzip 8308.zip
             rm 8308.zip
-            install_csv16
+            install_cs
         ;;
         4)
             mkdir -p /path/cs/8196
@@ -560,7 +569,7 @@ install_csv16() {
             wget $GAMES/cs/8196.zip
             unzip 8196.zip
             rm 8196.zip
-            install_csv16
+            install_cs
         ;;
         5)
             mkdir -p /path/cs/7882
@@ -568,7 +577,7 @@ install_csv16() {
             wget $GAMES/cs/7882.zip
             unzip 7882.zip
             rm 7882.zip
-            install_csv16
+            install_cs
         ;;
         6)
             mkdir -p /path/cs/7559
@@ -576,7 +585,7 @@ install_csv16() {
             wget $GAMES/cs/7559.zip
             unzip 7559.zip
             rm 7559.zip
-            install_csv16
+            install_cs
         ;;
         7)
             mkdir -p /path/cs/6153
@@ -584,7 +593,7 @@ install_csv16() {
             wget $GAMES/cs/6153.zip
             unzip 6153.zip
             rm 6153.zip
-            install_csv16
+            install_cs
         ;;
         8)
             mkdir -p /path/cs/5787
@@ -592,7 +601,7 @@ install_csv16() {
             wget $GAMES/cs/5787.zip
             unzip 5787.zip
             rm 5787.zip
-            install_csv16
+            install_cs
         ;;
         0)
             install_games;;
@@ -600,17 +609,17 @@ install_csv16() {
 }
 
 # Меню установки Counter-Strike: Source v34
-install_cssv34() {
+install_cssold() {
     clear
     log_t "Install Counter-Strike: Source v34"
     upd
     clear
-    log_t "Список доступных версий Counter-Strike: Source v34"
-    Info "- 1 - Steam [ Чистый сервер ]"
-    Info "- 0 - Назад"
+    log_t "Available servers for Counter-Strike: Source v34"
+    Info "- 1 - Steam [Clean server]"
+    Info "- 0 - Back"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1)
@@ -619,7 +628,7 @@ install_cssv34() {
             wget $GAMES/cssold/steam.zip
             unzip steam.zip
             rm steam.zip
-            install_cssv34
+            install_cssold
         ;;
         0)
             install_games;;
@@ -631,12 +640,12 @@ install_css() {
     log_t "Install Counter-Strike: Source"
     upd
     clear
-    log_t "Список доступных версий Counter-Strike: Source"
-    Info "- 1 - Steam [ Чистый сервер ]"
-    Info "- 0 - Назад"
+    log_t "Available servers for Counter-Strike: Source"
+    Info "- 1 - Steam [Clean server]"
+    Info "- 0 - Back"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1)
@@ -657,12 +666,12 @@ install_csgo() {
     log_t "Install Counter-Strike: GO"
     upd
     clear
-    log_t "Список доступных версий Counter-Strike: GO"
-    Info "- 1 - Steam [ Чистый сервер ]"
-    Info "- 0 - Назад"
+    log_t "Available servers for Counter-Strike: GO"
+    Info "- 1 - Steam [Clean server]"
+    Info "- 0 - Back"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1)
@@ -682,7 +691,7 @@ install_samp() {
     log_t "Install GTA: San Andreas Multiplayer"
     upd
     clear
-    log_t "Список доступных версий San Andreas Multiplayer"
+    log_t "Available servers for San Andreas Multiplayer"
     Info "- 1 - 0.3DL-R1"
     Info "- 2 - 0.3.7-R2"
     Info "- 3 - 0.3z-R4"
@@ -692,10 +701,10 @@ install_samp() {
     Info "- 7 - 0.3c-R5"
     Info "- 8 - 0.3b-R2"
     Info "- 9 - 0.3a-R8"
-    Info "- 0 - Назад"
+    Info "- 0 - Back"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1)
@@ -780,13 +789,13 @@ install_crmp() {
     log_t "Install GTA: Criminal Russia MP"
     upd
     clear
-    log_t "Список доступных версий GTA: Criminal Russia MP"
+    log_t "Available servers for GTA: Criminal Russia MP"
     Info "- 1 - 0.3.7-C5"
     Info "- 2 - 0.3e-C3"
-    Info "- 0 - Назад"
+    Info "- 0 - Back"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1)
@@ -815,13 +824,13 @@ install_mta() {
     log_t "Install GTA: Multi Theft Auto"
     upd
     clear
-    log_t "Список доступных версий GTA: Multi Theft Auto"
+    log_t "Available servers for GTA: Multi Theft Auto"
     Info "- 1 - 1.5.5-R2"
     Info "- 2 - 1.5.4-R3"
-    Info "- 0 - Назад"
+    Info "- 0 - Back"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1)
@@ -850,7 +859,7 @@ install_mc() {
     log_t "Install Minecraft"
     upd
     clear
-    log_t "Список доступных версий Minecraft"
+    log_t "Available servers for Minecraft"
     Info "- 1 - Craftbukkit-1.8.5-R 0.1"
     Info "- 2 - Craftbukkit-1.8-R 0.1"
     Info "- 3 - Craftbukkit-1.7.9-R 0.2"
@@ -861,10 +870,10 @@ install_mc() {
     Info "- 8 - Craftbukkit-1.11.2-R 0.1"
     Info "- 9 - Craftbukkit-1.11-R 0.1"
     Info "- 10 - Craftbukkit-1.10.2-R 0.1"
-    Info "- 0 - Назад"
+    Info "- 0 - Back"
     log_s
     Info
-    read -p "Пожалуйста, введите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1)
@@ -955,10 +964,10 @@ install_mc() {
 # Определение статуса
 infoStats() {
     if [ $? -eq 0 ]; then
-        echo -en "\E[${NUML};39f \033[1;32m [УСПЕШНО] \033[0m\n"
+        echo -en "\E[${NUML};39f \033[1;32m [SUCCESS] \033[0m\n"
         tput sgr0
     else
-        echo -en "\E[${NUML};39f \033[1;31m [ОШИБКА] \033[0m\n"
+        echo -en "\E[${NUML};39f \033[1;31m [ERROR] \033[0m\n"
         tput sgr0
     fi
     ((NUMS += 1))
@@ -966,7 +975,11 @@ infoStats() {
 }
 # Установка обязательных пакетов
 necPACK() {
-	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install git lsb-release apt-utils > /dev/null 2>&1
+	if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install git lsb-release apt-utils > /dev/null 2>&1
+	elif [ $DISTNAME == "CentOS" ]; then
+		yum -y install redhat-lsb-core yum-utils epel-release wget git
+	fi
 }
 # Добавление репозиториев
 addREPO() { 
@@ -996,16 +1009,31 @@ addREPO() {
         echo "deb-src http://security.debian.org/ $(lsb_release -sc)/updates main" >> /etc/apt/sources.list
         echo "deb http://ftp.ru.debian.org/debian/ $(lsb_release -sc)-updates main" >> /etc/apt/sources.list
         echo "deb-src http://ftp.ru.debian.org/debian/ $(lsb_release -sc)-updates main" >> /etc/apt/sources.list
-    fi
+    elif [ $DISTNAME == "CentOS" ]; then
+		yum -y install https://rpms.remirepo.net/enterprise/remi-release-8.rpm
+		wget -y --force-yes https://download-ib01.fedoraproject.org/pub/epel/8/Everything/x86_64/Packages/p/pwgen-2.08-3.el8.x86_64.rpm
+		rpm -Uvh pwgen-2.08-3.el8.x86_64.rpm
+		wget https://download-ib01.fedoraproject.org/pub/epel/8/x86_64/Packages/q/qstat-2.11-13.20080912svn311.el7.x86_64.rpm ## ССЫЛКА СДОХЛА!
+		rpm -Uvh qstat-2.11-13.20080912svn311.el7.x86_64.rpm ## ЭТО СООТВЕТСТВЕННО ТОЖЕ НЕ ВСТАНЕТ
+	fi
     git clone $GITREQLINK > /dev/null 2>&1
 }
 # Получение списка пакетов с репозитория
 sysUPDATE() {
-	apt -y --force-yes update > /dev/null 2>&1
+	if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages update > /dev/null 2>&1
+	elif [ $DISTNAME == "CentOS" ]; then
+		yum -y check-update
+		yum -y update
+	fi
 }
-# Обновление пакетов
+# Обновление системных пакетов
 sysUPGRADE() {
-	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade > /dev/null 2>&1
+	if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade > /dev/null 2>&1
+	elif [ $DISTNAME == "CentOS" ]; then
+		yum -y upgrade
+	fi
 }
 # Добавление файла подкачки
 swapADD() {
@@ -1018,11 +1046,21 @@ swapADD() {
 }
 # Популярные пакеты
 popPACK() {
-	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install pwgen dialog sudo bc lib32z1 screen htop nano tcpdump zip unzip mc lsof apt-transport-https ca-certificates safe-rm > /dev/null 2>&1
+	if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install pwgen dialog sudo bc lib32z1 screen htop nano tcpdump zip unzip mc lsof apt-transport-https ca-certificates safe-rm > /dev/null 2>&1
+	elif [ $DISTNAME == "CentOS" ]; then
+		yum -y install pwgen htop screen dialog sudo bc net-tools bash-completion curl vim nano tcpdump zip unzip mc lsof
+	fi
 }
 # Пакеты для работы панели
 packPANEL() {
-	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install cron curl ssh nload gdb lsof qstat > /dev/null 2>&1
+	if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install cron curl ssh nload gdb lsof qstat > /dev/null 2>&1
+	elif [ $DISTNAME == "CentOS" ]; then
+		yum -y install qstat crontabs openssh-clients openssh-server nload gdb
+		yum -y install nginx
+		yum install mariadb-server mariadb
+	fi
 }
 # Популярные переменные
 varPOP() {
@@ -1041,36 +1079,55 @@ varPANEL() {
 }
 # Подготовка к установке MySQL
 setMYSQL() {
-    mkdir /resegp > /dev/null 2>&1
-    echo "$MYSQLPASS" >> /resegp/conf.cfg
+	if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+		mkdir /resegp > /dev/null 2>&1
+		echo "$SQLPASS" >> /resegp/conf.cfg
+	elif [ $DISTNAME == "CentOS" ]; then
+		yum install mariadb-server mariadb
+	fi
 }
 # Установка MySQL
 installMYSQL() {
-	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install mariadb-server > /dev/null 2>&1
-	sudo mysql -u root -p$MYSQLPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQLPASS';" > /dev/null 2>&1 | grep -v "Using a password on the command"
-	sudo mysql -u root -p$MYSQLPASS -e "FLUSH PRIVILEGES;" > /dev/null 2>&1 | grep -v "Using a password on the command"
-    service mysql stop > /dev/null 2>&1
-    service mysql start > /dev/null 2>&1
+	if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install mariadb-server > /dev/null 2>&1
+		sudo mysql -u root -p$SQLPASS -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '$SQLPASS';" > /dev/null 2>&1 | grep -v "Using a password on the command"
+		sudo mysql -u root -p$SQLPASS -e "FLUSH PRIVILEGES;" > /dev/null 2>&1 | grep -v "Using a password on the command"
+		service mysql stop > /dev/null 2>&1
+		service mysql start > /dev/null 2>&1
+	elif [ $DISTNAME == "CentOS" ]; then
+		yum install mariadb-server mariadb -y
+	fi
 }
 # Добавление PHP
 addPHP() {
-	# Для Debian
 	if [ $DISTNAME == "Debian" ]; then
 		wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg > /dev/null 2>&1
 		sh -c 'echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list' > /dev/null 2>&1
 	elif [ $DISTNAME == "Ubuntu" ]; then
         apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install software-properties-common > /dev/null 2>&1
 		add-apt-repository -y ppa:ondrej/php > /dev/null 2>&1
-    fi
+	fi
 }
 # Установка PHP
 installPHP() {
+	#if [ $DISTNAME == "Ubuntu" ]; then
+	#	if [ $PHPVER = "7.4" ]; then
+	#		PHPVER=""
+	#	else
+	#		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install software-properties-common > /dev/null 2>&1
+	#		add-apt-repository -y ppa:ondrej/php > /dev/null 2>&1
+	#	fi
+	#fi
 	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install php$PHPVER > /dev/null 2>&1
 }
 # Установка пакетов PHP
 installPHPPACK() {
     apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install php$PHPVER-cli php$PHPVER-common php$PHPVER-curl php$PHPVER-mbstring php$PHPVER-mysql php$PHPVER-xml php$PHPVER-memcache php$PHPVER-memcached memcached php$PHPVER-gd php$PHPVER-zip php$PHPVER-ssh2 > /dev/null 2>&1
-	mv EngineGP-requirements/php/php /etc/php/$PHPVER/apache2/php.ini > /dev/null 2>&1
+	#if [ $DISTNAME == "Ubuntu" ] && [ "$PHPVER" = "7.4" ]; then
+	#	mv EngineGP-requirements/php/php /etc/php/7.4/apache2/php.ini > /dev/null 2>&1
+	#else
+		mv EngineGP-requirements/php/php /etc/php/$PHPVER/apache2/php.ini > /dev/null 2>&1
+	#fi
 }
 # Установка Apache
 installAPACHE() {
@@ -1110,9 +1167,9 @@ setPMA() {
     if [ $DISTNAME == "Debian" ] && [ $DISTVER == "9" ]; then
         echo "phpmyadmin phpmyadmin/dbconfig-install boolean true" | debconf-set-selections > /dev/null 2>&1
         echo "phpmyadmin phpmyadmin/mysql/admin-user string root" | debconf-set-selections > /dev/null 2>&1
-        echo "phpmyadmin phpmyadmin/mysql/admin-pass password $MYSQLPASS" | debconf-set-selections > /dev/null 2>&1
-        echo "phpmyadmin phpmyadmin/mysql/app-pass password $MYSQLPASS" |debconf-set-selections > /dev/null 2>&1
-        echo "phpmyadmin phpmyadmin/app-password-confirm password $MYSQLPASS" | debconf-set-selections > /dev/null 2>&1
+        echo "phpmyadmin phpmyadmin/mysql/admin-pass password $SQLPASS" | debconf-set-selections > /dev/null 2>&1
+        echo "phpmyadmin phpmyadmin/mysql/app-pass password $SQLPASS" |debconf-set-selections > /dev/null 2>&1
+        echo "phpmyadmin phpmyadmin/app-password-confirm password $SQLPASS" | debconf-set-selections > /dev/null 2>&1
         echo 'phpmyadmin phpmyadmin/reconfigure-webserver multiselect apache2' | debconf-set-selections > /dev/null 2>&1
         apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install phpmyadmin > /dev/null 2>&1
     else
@@ -1130,9 +1187,9 @@ setPMA() {
         KEYPMANEW="\$cfg\\['blowfish_secret'\\] = '${GENKEYPMA}';"
         sed -i "s/${KEYPMAOLD}/${KEYPMANEW}/g" /usr/share/phpmyadmin/config.inc.php > /dev/null 2>&1
         sed -i "s/pmapass/${GENPASPMA}/g" /usr/share/phpmyadmin/config.inc.php > /dev/null 2>&1
-        mysql -u root -p$MYSQLPASS < /usr/share/phpmyadmin/sql/create_tables.sql > /dev/null 2>&1 | grep -v "Using a password on the command"
-        mysql -u root -p$MYSQLPASS -e "GRANT SELECT, INSERT, UPDATE, DELETE ON phpmyadmin.* TO 'pma'@'localhost' IDENTIFIED BY '$GENPASPMA';" > /dev/null 2>&1 | grep -v "Using a password on the command"
-        mysql -u root -p$MYSQLPASS -e "GRANT ALL PRIVILEGES ON *.* TO 'pma'@'localhost' IDENTIFIED BY '$GENPASPMA' WITH GRANT OPTION;" > /dev/null 2>&1 | grep -v "Using a password on the command"
+        mysql -u root -p$SQLPASS < /usr/share/phpmyadmin/sql/create_tables.sql > /dev/null 2>&1 | grep -v "Using a password on the command"
+        mysql -u root -p$SQLPASS -e "GRANT SELECT, INSERT, UPDATE, DELETE ON phpmyadmin.* TO 'pma'@'localhost' IDENTIFIED BY '$GENPASPMA';" > /dev/null 2>&1 | grep -v "Using a password on the command"
+        mysql -u root -p$SQLPASS -e "GRANT ALL PRIVILEGES ON *.* TO 'pma'@'localhost' IDENTIFIED BY '$GENPASPMA' WITH GRANT OPTION;" > /dev/null 2>&1 | grep -v "Using a password on the command"
         mv EngineGP-requirements/phpmyadmin/phpmyadmin.conf $APACHEDIR > /dev/null 2>&1
         sudo a2enconf phpmyadmin.conf > /dev/null 2>&1
         sudo systemctl reload apache2 > /dev/null 2>&1
@@ -1184,7 +1241,7 @@ installPANEL() {
     sed -i "s/ENGINEGPHASH/${ENGINEGPHASH}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
     sed -i "s/1517667554/${HOSTBIRTHDAY}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
     sed -i "s/1577869200/${HOSTBIRTHDAY}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
-    mysql -uroot -p$MYSQLPASS enginegp < EngineGP/enginegp.sql > /dev/null 2>&1 | grep -v "Using a password on the command"
+    mysql -uroot -p$SQLPASS enginegp < EngineGP/enginegp.sql > /dev/null 2>&1 | grep -v "Using a password on the command"
     rm EngineGP/enginegp.sql > /dev/null 2>&1
     rm -rf EngineGP/.git/ > /dev/null 2>&1
     mv EngineGP $DIR > /dev/null 2>&1
@@ -1206,7 +1263,12 @@ setTIMEPANEL() {
 }
 # Перезагрузка MySQL
 serMYSQLRES() {
-	service mysql restart > /dev/null 2>&1
+	if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+		service mysql restart > /dev/null 2>&1
+	elif [ $DISTNAME == "CentOS" ]; then
+		systemctl start mariadb
+		systemctl enable mariadb
+	fi
 }
 # Создание переменных локации
 varLOCATION() {
@@ -1258,11 +1320,11 @@ installPROFTPD() {
     mv EngineGP-requirements/proftpd/proftpd /etc/proftpd/proftpd.conf > /dev/null 2>&1
     mv EngineGP-requirements/proftpd/proftpd_modules /etc/proftpd/modules.conf > /dev/null 2>&1
     mv EngineGP-requirements/proftpd/proftpd_sql /etc/proftpd/sql.conf > /dev/null 2>&1
-    mysql -uroot -p$MYSQLPASS -e "CREATE DATABASE ftp;" > /dev/null 2>&1 | grep -v "Using a password on the command"
-    mysql -uroot -p$MYSQLPASS -e "CREATE USER 'ftp'@'localhost' IDENTIFIED BY '$FTPPASS';" > /dev/null 2>&1 | grep -v "Using a password on the command"
-    mysql -uroot -p$MYSQLPASS -e "GRANT ALL PRIVILEGES ON ftp . * TO 'ftp'@'localhost';" > /dev/null 2>&1 | grep -v "Using a password on the command"
-    mysql -uroot -p$MYSQLPASS ftp < EngineGP-requirements/proftpd/sqldump.sql > /dev/null 2>&1 | grep -v "Using a password on the command"
-    sed -i 's/passwdfor/'$MYSQLPASS'/g' /etc/proftpd/sql.conf > /dev/null 2>&1
+    mysql -uroot -p$SQLPASS -e "CREATE DATABASE ftp;" > /dev/null 2>&1 | grep -v "Using a password on the command"
+    mysql -uroot -p$SQLPASS -e "CREATE USER 'ftp'@'localhost' IDENTIFIED BY '$FTPPASS';" > /dev/null 2>&1 | grep -v "Using a password on the command"
+    mysql -uroot -p$SQLPASS -e "GRANT ALL PRIVILEGES ON ftp . * TO 'ftp'@'localhost';" > /dev/null 2>&1 | grep -v "Using a password on the command"
+    mysql -uroot -p$SQLPASS ftp < EngineGP-requirements/proftpd/sqldump.sql > /dev/null 2>&1 | grep -v "Using a password on the command"
+    sed -i 's/passwdfor/'$SQLPASS'/g' /etc/proftpd/sql.conf > /dev/null 2>&1
     chmod -R 750 /etc/proftpd > /dev/null 2>&1
     service proftpd restart > /dev/null 2>&1
 }
@@ -1317,51 +1379,53 @@ delete_all() {
 	rm -r /path # Удаление папки с игровыми сборками
 	rm -r /var/enginegp # Удаление панели
 	rm -r /root # Удаление временных файлов и пользовательских данных
-	apt autoremove git lsb-release apt-utils pwgen dialog sudo bc lib32z1 screen htop nano tcpdump zip unzip mc lsof apt-transport-https ca-certificates safe-rm cron curl ssh nload gdb lsof qstat mysql-community-server mysql-server mysql-apt-config php$PHPVER php$PHPVER-cli php$PHPVER-common php$PHPVER-curl php$PHPVER-mbstring php$PHPVER-mysql php$PHPVER-xml php$PHPVER-memcache php$PHPVER-memcached memcached php$PHPVER-gd php$PHPVER-zip php$PHPVER-ssh2 apache2 phpmyadmin java libbabeltrace1 libc6-dbg libdw1 lib32stdc++6 libreadline5 ssh qstat gdb-minimal lib32gcc1 ntpdate lsof safe-rm htop mc i386 gcc-multilib proftpd-basic proftpd-mod-mysql nginx
+	if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
+		apt autoremove git lsb-release apt-utils pwgen dialog sudo bc lib32z1 screen htop nano tcpdump zip unzip mc lsof apt-transport-https ca-certificates safe-rm cron curl ssh nload gdb lsof qstat mysql-community-server mysql-server mysql-apt-config php$PHPVER php$PHPVER-cli php$PHPVER-common php$PHPVER-curl php$PHPVER-mbstring php$PHPVER-mysql php$PHPVER-xml php$PHPVER-memcache php$PHPVER-memcached memcached php$PHPVER-gd php$PHPVER-zip php$PHPVER-ssh2 apache2 phpmyadmin java libbabeltrace1 libc6-dbg libdw1 lib32stdc++6 libreadline5 ssh qstat gdb-minimal lib32gcc1 ntpdate lsof safe-rm htop mc i386 gcc-multilib proftpd-basic proftpd-mod-mysql nginx
+	elif [ $DISTNAME == "CentOS" ]; then
+		echo " Были удалены лишь файлы. Деинсталляция пакетов не разработана"
+	fi
 }
 # Главное навигационное меню
 menu() {
     clear
-    log_t "Welcome! Добро пожаловать! Версия установщика: $SHVER"
-    Info "- 1 - Panel installing || Установка панели"
-    Info "- 2 - Location setting || Настройка локации"
+    log_t " Welcome! Добро пожаловать! EngineGP installer v.$SHVER"
+    Info "- 1 - Panel installing  || Установка панели"
+    Info "- 2 - Location setting  || Настройка локации"
     Info "- 3 - Games downloading || Скачивание игр"
-	Info "- 4 - Reinstalling (testing) || Переустановка (тестируется)"
-	Info "- 5 - Delete all without saving || Удалить всё (тестируется)"
-    Info "- 0 - Exit || Выход"
+	#Info "- 4 - Reinstalling (testing)    || Переустановка (тестируется)"
+	#Info "- 5 - Delete all without saving || Удалить всё (тестируется)"
+    Info "- 0 -  Exit             || Выход"
 	Info ""
-	
 	if [ $(echo "$LASTSHVER $SHVER" | awk '{print $1*100 - $2*100}') -gt 0 ]; then
-		Info " New version is available || Доступна новая версия: $LASTSHVER"
+		Info " New installer is available || Доступен новый установщик: $LASTSHVER"
 	fi
-	
 	Info ""
 	Info " < System information || Информация о системе >"
-	Info " Operation system || Операционная система: $DISTNAME $DISTVER"
-	Info " IP-address || IP-адрес: $IPADDR"
+	Info "    Operation system  || Операционная система: $DISTNAME $DISTVER"
+	Info "       IP-address     || IP-Address: $IPADDR"
     log_s
     Info
-    read -p "Choose menu item || Выберите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1) menu_install_enginegp;;   
         2) menu_setting_location;;   
         3) install_games;;
-		4) menu_reinstall;;
-		5) menu_delete_all;;
+	#	4) menu_reinstall;;
+	#	5) menu_delete_all;;
         0) exit;;
     esac
 }
 # Меню установки EngineGP
 menu_install_enginegp() {
     clear
-    log_t "EngineGP installing || Установка EngineGP"
-    Info "- 1 - Install panel only || Установить только панель"
+    log_t "- - -     EngineGP installing        || Установка EngineGP"
+    Info "- 1 - Install panel only             || Установить только панель"
     Info "- 2 - Install panel and set location || Установить панель и настроить локацию"
-    Info "- 0 - Back to main || Вернуться в главное меню"
+    Info "- 0 - Back to main                   || Вернуться в главное меню"
     log_s
     Info
-    read -p "Choose menu item || Выберите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1) install_enginegp;;
@@ -1372,13 +1436,13 @@ menu_install_enginegp() {
 # Меню настройки локации
 menu_setting_location() {
     clear
-    log_t "EngineGP location set || Настройка локации"
+    log_t "      EngineGP location set        || Настройка локации"
     Info "- 1 - Set location on clean server || Настройка локации на чистом сервере"
-    Info "- 2 - Set location on EngineGP || Настройка локации на EngineGP"
-    Info "- 0 - Назад"
+    Info "- 2 - Set location on EngineGP     || Настройка локации на EngineGP"
+    Info "- 0 - Back"
     log_s
     Info
-    read -p "Choose menu item || Выберите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1) setting_location;;
@@ -1388,13 +1452,13 @@ menu_setting_location() {
 }
 # Меню после настройки локации
 menu_location_setting_finish() {
-    log_t "Do you want to install games? || Хотите установить сборки для игр?"
+    log_t " Do you want to install games? || Хотите установить сборки для игр?"
     Info "- 1 - Yes, go to games manager || Да, перейти в менеджер игр"
-    Info "- 2 - No, exit || Нет, выйти из установки"
-    Info "- 0 - Go back to main menu || Вернуться в главное меню"
+    Info "- 2 - No, exit                 || Нет, выйти из установки"
+    Info "- 0 - Go back to main menu     || Вернуться в главное меню"
     log_s
     Info
-    read -p "Choose menu item || Выберите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1) install_games;;
@@ -1407,10 +1471,10 @@ menu_reinstall() {
 	log_t "Sure? All files will be lost, include your personal!\n- - - OS reinstalling recommended for restoring to the factory state"
     log_t "Вы уверены? Будут удалены абсолютно все файлы, в т.ч. ваши личные!\n- - - Для отката к заводскому состоянию рекомендутся полностью переустановить ОС"
     Info "- 1 - Yes, reinstall || Да, переустановить"
-    Info "- 0 - No, i changed my mind || Нет, я передумал"
+    Info "- 0 - No, i changed my ming || Нет, я передумал"
     log_s
     Info
-    read -p "Choose menu item || Выберите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1) reinstall;;
@@ -1423,10 +1487,10 @@ menu_delete_all() {
 	log_t "Sure? All files will be lost, include your personal!\n- - - OS reinstalling recommended for restoring to the factory state"
     log_t "Вы уверены? Будут удалены абсолютно все файлы, в т.ч. ваши личные!\n- - - Для отката к заводскому состоянию рекомендутся полностью переустановить ОС"
     Info "- 1 - Yes, delete all || Да, удалить"
-    Info "- 0 - No, i changed my mind || Нет, я передумал"
+    Info "- 0 - No, i changed my ming || Нет, я передумал"
     log_s
     Info
-    read -p "Choose menu item || Выберите пункт меню: " case
+    read -p "Choose menu item: " case
 
     case $case in
         1) delete_all;;
@@ -1435,31 +1499,28 @@ menu_delete_all() {
 }
 
 connection_check() {
-    if [ -z "$LASTSHVER"]; then
-	    clear
-		echo ""
-	    echo " Server connection error!"
-		echo ""
-	    echo " Ошибка соединения с сервером!"
-	    tput sgr0
-	else
-	    os_version_check
+	if [ -z "$LASTSHVER"]; then
+	  clear
+	  echo " Server connection error!"
+	  echo " Ошибка соединения с сервером!"
+	  tput sgr0
+	 else
+	  os_version_check
 	fi
 }
 
 os_version_check() {
-    if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
-        clear
-        menu
-    else
-        echo ""
-        echo " Sorry, but this Linux version is not currently supported"
-        echo " Please, check new version on our site: EngineGP.RU"
-		echo ""
-        echo " Данная версия установщика не поддерживает установленную ОС"
-        echo " Пожалуйста, проверьте наличие новой версии на сайте EngineGP.RU"
-        tput sgr0
-    fi
+if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ] || [ $DISTNAME == "CentOS" ]; then
+  clear
+  menu
+ else
+	echo ""
+  echo " Sorry, but this Linux version is not currently supported"
+  echo " Please, check new version on our site: EngineGP.RU"
+  echo " Данная версия установщика не поддерживает установленную ОС"
+  echo " Пожалуйста, проверьте наличие новой версии на сайте EngineGP.RU"
+  tput sgr0
+fi
 }
 
 connection_check
