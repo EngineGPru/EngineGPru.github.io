@@ -16,6 +16,7 @@ echo "Initaization..."
 WRITELOG_OFF
 
 echo "Obtaining operation system version..."
+
 # Определение ОС и ее версии, а также задание переменной для избирания нужных команд
 DISTNAME=`cat /etc/issue.net | awk '{print $1}'` # Название дистрибутива
 if [ "$DISTNAME" == "Debian" ]; then
@@ -32,7 +33,7 @@ elif [ $DISTNAME == "CentOS" ]; then
 fi
 
 DOMAIN="https://enginegp.ru" # Основной домен для работы
-SHVER="2.03" # Версия установщика
+SHVER="2.04" # Версия установщика
 
 echo "Getting data from the server..."
 
@@ -983,7 +984,14 @@ necPACK() {
 }
 # Добавление репозиториев
 addREPO() { 
-	if [ $DISTNAME == "Ubuntu" ]; then
+	if [ $DISTNAME == "Debian" ] && [ $DISTVER != "11" ]; then
+		echo "deb http://ftp.ru.debian.org/debian/ $(lsb_release -sc) main" > /etc/apt/sources.list
+        echo "deb-src http://ftp.ru.debian.org/debian/ $(lsb_release -sc) main" >> /etc/apt/sources.list
+        echo "deb http://security.debian.org/ $(lsb_release -sc)/updates main" >> /etc/apt/sources.list
+        echo "deb-src http://security.debian.org/ $(lsb_release -sc)/updates main" >> /etc/apt/sources.list
+        echo "deb http://ftp.ru.debian.org/debian/ $(lsb_release -sc)-updates main" >> /etc/apt/sources.list
+        echo "deb-src http://ftp.ru.debian.org/debian/ $(lsb_release -sc)-updates main" >> /etc/apt/sources.list
+	elif [ $DISTNAME == "Ubuntu" ]; then
 		echo "deb http://archive.ubuntu.com/ubuntu/ $(lsb_release -sc) main restricted universe multiverse" >> /etc/apt/sources.list
         echo "deb-src http://archive.ubuntu.com/ubuntu/ $(lsb_release -sc) main restricted universe multiverse" >> /etc/apt/sources.list
         echo "deb http://archive.ubuntu.com/ubuntu/ $(lsb_release -sc)-security main restricted universe multiverse" >> /etc/apt/sources.list
@@ -1002,13 +1010,6 @@ addREPO() {
 		echo "deb-src http://security.ubuntu.com/ubuntu $(lsb_release -sc)-security universe" >> /etc/apt/sources.list
 		#echo "deb http://security.ubuntu.com/ubuntu $(lsb_release -sc)-security multiverse" >> /etc/apt/sources.list
 		#echo "deb-src http://security.ubuntu.com/ubuntu $(lsb_release -sc)-security multiverse" >> /etc/apt/sources.list
-	elif [ $DISTNAME == "Debian" ] && [ $DISTVER != "11" ]; then
-		echo "deb http://ftp.ru.debian.org/debian/ $(lsb_release -sc) main" > /etc/apt/sources.list
-        echo "deb-src http://ftp.ru.debian.org/debian/ $(lsb_release -sc) main" >> /etc/apt/sources.list
-        echo "deb http://security.debian.org/ $(lsb_release -sc)/updates main" >> /etc/apt/sources.list
-        echo "deb-src http://security.debian.org/ $(lsb_release -sc)/updates main" >> /etc/apt/sources.list
-        echo "deb http://ftp.ru.debian.org/debian/ $(lsb_release -sc)-updates main" >> /etc/apt/sources.list
-        echo "deb-src http://ftp.ru.debian.org/debian/ $(lsb_release -sc)-updates main" >> /etc/apt/sources.list
     elif [ $DISTNAME == "CentOS" ]; then
 		yum -y install https://rpms.remirepo.net/enterprise/remi-release-8.rpm
 		wget -y --force-yes https://download-ib01.fedoraproject.org/pub/epel/8/Everything/x86_64/Packages/p/pwgen-2.08-3.el8.x86_64.rpm
@@ -1064,7 +1065,7 @@ packPANEL() {
 }
 # Популярные переменные
 varPOP() {
-    MYSQLPASS=$(pwgen -cns -1 12)
+    SQLPASS=$(pwgen -cns -1 12)
     SAVE='/root/enginegp.cfg'
 }
 # Создание переменных панели
@@ -1245,7 +1246,7 @@ installPANEL() {
     rm EngineGP/enginegp.sql > /dev/null 2>&1
     rm -rf EngineGP/.git/ > /dev/null 2>&1
     mv EngineGP $DIR > /dev/null 2>&1
-    sed -i "s/MYSQLPASS/${MYSQLPASS}/g" $DIR/system/data/mysql.php > /dev/null 2>&1
+    sed -i "s/SQLPASS/${SQLPASS}/g" $DIR/system/data/mysql.php > /dev/null 2>&1
     sed -i "s/IPADDR/${IPADDR}/g" $DIR/system/data/config.php > /dev/null 2>&1
     sed -i "s/CRONKEY/${CRONKEY}/g" $DIR/system/data/config.php > /dev/null 2>&1
     chown -R www-data:www-data $DIR/ > /dev/null 2>&1
@@ -1363,7 +1364,7 @@ serLOCATIONRES() {
 }
 # Чтение пароля MySQL
 readMySQL() {
-    MYSQLPASS=`cat /resegp/conf.cfg | awk '{print $1}'`
+    SQLPASS=`cat /resegp/conf.cfg | awk '{print $1}'`
     SAVE='/root/enginegp.cfg'
 }
 # Переустановка EngineGP
