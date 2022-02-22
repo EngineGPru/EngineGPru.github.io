@@ -33,7 +33,7 @@ elif [ $DISTNAME == "CentOS" ]; then
 fi
 
 DOMAIN="https://enginegp.ru" # Основной домен для работы
-SHVER="2.04" # Версия установщика
+SHVER="2.05" # Версия установщика
 
 echo "Getting data from the server..."
 
@@ -1174,6 +1174,7 @@ setPMA() {
         echo 'phpmyadmin phpmyadmin/reconfigure-webserver multiselect apache2' | debconf-set-selections > /dev/null 2>&1
         apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install phpmyadmin > /dev/null 2>&1
     else
+		cd ~ > /dev/null 2>&1
         wget $PMALINK > /dev/null 2>&1
         tar xvf $PMAVER.tar.gz > /dev/null 2>&1
         rm $PMAVER.tar.gz > /dev/null 2>&1
@@ -1511,7 +1512,8 @@ connection_check() {
 }
 
 os_version_check() {
-if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ] || [ $DISTNAME == "CentOS" ]; then
+#if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ] || [ $DISTNAME == "CentOS" ]; then
+if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
   clear
   menu
  else
