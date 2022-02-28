@@ -20,9 +20,9 @@ echo "Obtaining operation system version..."
 # Определение ОС и ее версии, а также задание переменной для избирания нужных команд
 DISTNAME=`cat /etc/issue.net | awk '{print $1}'` # Название дистрибутива
 if [ "$DISTNAME" == "Debian" ]; then
-    DISTVER=`cat /etc/issue.net | awk '{print $3}'` # Версия дистрибутива (Debian)
+    DISTVER=`cat /etc/issue.net | awk '{print $3}'` # Версия дистрибутива Debian
 elif [ "$DISTNAME" == "Ubuntu" ]; then
-    DISTVER=`cat /etc/issue.net | awk '{print $2}'` # Версия дистрибутива (Ubuntu)
+    DISTVER=`cat /etc/issue.net | awk '{print $2}'` # Версия дистрибутива Ubuntu
 fi
 
 echo "Preparing operation system..."
@@ -33,7 +33,7 @@ elif [ $DISTNAME == "CentOS" ]; then
 fi
 
 DOMAIN="https://enginegp.ru" # Основной домен для работы
-SHVER="2.05" # Версия установщика
+SHVER="2.06" # Версия установщика
 
 echo "Getting data from the server..."
 
@@ -1387,19 +1387,45 @@ delete_all() {
 		echo " Были удалены лишь файлы. Деинсталляция пакетов не разработана"
 	fi
 }
+# Установка SSL сертефтиката
+install_ssl() {
+	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages update
+	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade
+	if [ $DISTNAME == "Debian" ]; then
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y python-certbot-apache
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y certbot
+		sudo certbot --apache --agree-tos --preferred-challenges http
+		service apache2 restart
+	else if [ $DISTNAME == "Ubuntu" ]; then
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y python3-certbot-apache
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y certbot
+		sudo certbot --apache --agree-tos --preferred-challenges http
+		service apache2 restart
+	fi
+	log_t " Let's Encrypt SSL serteficate installed successfully!"
+	log_t " SSL сертефтикат Let's Encrypt успешно установлен!"
+	
+	read -p "Перейти в главное меню? 1 - Да, 0 - Нет " case
+    case $case in
+        1) menu;;
+        0) exit;;
+    esac
+}
 # Главное навигационное меню
 menu() {
     clear
-    log_t " Welcome! Добро пожаловать! EngineGP installer v.$SHVER"
-    Info "- 1 - Panel installing  || Установка панели"
-    Info "- 2 - Location setting  || Настройка локации"
-    Info "- 3 - Games downloading || Скачивание игр"
+    log_t "Здравствуйте! Welcome! EngineGP installer v.$SHVER (nightly)"
+    Info "- 1 - Panel installing	|| Установка панели"
+    Info "- 2 - Location setting	|| Настройка локации"
+    Info "- 3 - Games downloading	|| Скачивание игр"
 	#Info "- 4 - Reinstalling (testing)    || Переустановка (тестируется)"
 	#Info "- 5 - Delete all without saving || Удалить всё (тестируется)"
-    Info "- 0 -  Exit             || Выход"
+	Info "- 6 - Unpack panel files	|| Распаковать файлы панели"
+	Info "- 7 - Set SSL serteficate	|| Установить SSL сертефикат"
+    Info "- 0 -  Exit				|| Выход"
 	Info ""
 	if [ $(echo "$LASTSHVER $SHVER" | awk '{print $1*100 - $2*100}') -gt 0 ]; then
-		Info " New installer is available || Доступен новый установщик: $LASTSHVER"
+	Info "New installer is available || Доступен новый установщик: $LASTSHVER"
 	fi
 	Info ""
 	Info " < System information || Информация о системе >"
@@ -1410,11 +1436,13 @@ menu() {
     read -p "Choose menu item: " case
 
     case $case in
-        1) menu_install_enginegp;;   
-        2) menu_setting_location;;   
+        1) menu_install_enginegp;;
+        2) menu_setting_location;;
         3) install_games;;
 	#	4) menu_reinstall;;
 	#	5) menu_delete_all;;
+		6) git clone $GITLINK;;
+		7) install_ssl;;
         0) exit;;
     esac
 }
