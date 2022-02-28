@@ -1387,30 +1387,6 @@ delete_all() {
 		echo " Были удалены лишь файлы. Деинсталляция пакетов не разработана"
 	fi
 }
-# Установка SSL сертефтиката
-install_ssl() {
-	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages update
-	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade
-	if [ $DISTNAME == "Debian" ]; then
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y python-certbot-apache
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y certbot
-		sudo certbot --apache --agree-tos --preferred-challenges http
-		service apache2 restart
-	else if [ $DISTNAME == "Ubuntu" ]; then
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y python3-certbot-apache
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y certbot
-		sudo certbot --apache --agree-tos --preferred-challenges http
-		service apache2 restart
-	fi
-	log_t " Let's Encrypt SSL serteficate installed successfully!"
-	log_t " SSL сертефтикат Let's Encrypt успешно установлен!"
-	
-	read -p "Перейти в главное меню? 1 - Да, 0 - Нет " case
-    case $case in
-        1) menu;;
-        0) exit;;
-    esac
-}
 # Главное навигационное меню
 menu() {
     clear
@@ -1443,6 +1419,30 @@ menu() {
 	#	5) menu_delete_all;;
 		6) git clone $GITLINK;;
 		7) install_ssl;;
+        0) exit;;
+    esac
+}
+# Установка SSL сертефтиката
+install_ssl() {
+	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages update
+	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade
+	if [ $DISTNAME == "Debian" ]; then
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y python-certbot-apache
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y certbot
+		sudo certbot --apache --agree-tos --preferred-challenges http
+		service apache2 restart
+	else if [ $DISTNAME == "Ubuntu" ]; then
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y python3-certbot-apache
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install -y certbot
+		sudo certbot --apache --agree-tos --preferred-challenges http
+		service apache2 restart
+	fi
+	log_t " Let's Encrypt SSL serteficate installed successfully!"
+	log_t " SSL сертефтикат Let's Encrypt успешно установлен!"
+	
+	read -p "Перейти в главное меню? 1 - Да, 0 - Нет " case
+    case $case in
+        1) menu;;
         0) exit;;
     esac
 }
