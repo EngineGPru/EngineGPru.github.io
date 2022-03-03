@@ -118,6 +118,7 @@ install_enginegp() {
         infoStats
     echo -en "(${NUMS}/${PIMS}) Packages installing"
 		necPACK
+		GITclone
         popPACK
         packPANEL
         varPOP
@@ -215,6 +216,7 @@ install_enginegp_location() {
         infoStats
     echo -en "(${NUMS}/${PLAI}) Packages installing"
 		necPACK
+		GITclone
         popPACK
         packPANEL
         varPOP
@@ -349,6 +351,7 @@ setting_location() {
         infoStats
     echo -en "(${NUMS}/${LSMS}) Packages installing"
 		necPACK
+		GITclone
         popPACK
         varPOP
         varLOCATION
@@ -1017,6 +1020,9 @@ addREPO() {
 		wget https://download-ib01.fedoraproject.org/pub/epel/8/x86_64/Packages/q/qstat-2.11-13.20080912svn311.el7.x86_64.rpm ## ССЫЛКА СДОХЛА!
 		rpm -Uvh qstat-2.11-13.20080912svn311.el7.x86_64.rpm ## ЭТО СООТВЕТСТВЕННО ТОЖЕ НЕ ВСТАНЕТ
 	fi
+}
+# Клонирование гит репов
+GITclone() { 
     git clone $GITREQLINK > /dev/null 2>&1
 }
 # Получение списка пакетов с репозитория
