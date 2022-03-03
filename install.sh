@@ -32,7 +32,7 @@ elif [ $DISTNAME == "CentOS" ]; then
 	yum -y install wget
 fi
 
-DOMAIN="https://enginegp.ru" # Основной домен для работы
+DOMAIN="http://enginegp.ru" # Основной домен для работы
 SHVER="2.06" # Версия установщика
 
 echo "Getting data from the server..."
