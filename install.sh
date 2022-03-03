@@ -33,7 +33,7 @@ elif [ $DISTNAME == "CentOS" ]; then
 fi
 
 DOMAIN="http://enginegp.ru" # Основной домен для работы
-SHVER="2.06" # Версия установщика
+SHVER="2.07" # Версия установщика
 
 echo "Getting data from the server..."
 
@@ -106,7 +106,6 @@ install_enginegp() {
     log_t "Start Install EngineGP/Detected OS Version: "$DISTNAME" "$DISTVER
     echo -en "(${NUMS}/${PIMS}) Repositories adding"
 		addREPO
-        necPACK
         infoStats
     echo -en "(${NUMS}/${PIMS}) Packages list updating"
         sysUPDATE
@@ -117,7 +116,8 @@ install_enginegp() {
     echo -en "(${NUMS}/${PIMS}) Checking and adding swap"
         swapADD
         infoStats
-    echo -en "(${NUMS}/${PIMS}) Repositories adding"
+    echo -en "(${NUMS}/${PIMS}) Packages installing"
+		necPACK
         popPACK
         packPANEL
         varPOP
@@ -203,7 +203,6 @@ install_enginegp_location() {
     log_t "Start Install And Setting/Detected OS Version: "$DISTNAME" "$DISTVER
     echo -en "(${NUMS}/${PLAI}) Repositories adding"
         addREPO
-		necPACK
         infoStats
     echo -en "(${NUMS}/${PLAI}) Packages list updating"
         sysUPDATE
@@ -214,7 +213,8 @@ install_enginegp_location() {
     echo -en "(${NUMS}/${PLAI}) Checking and adding swap"
         swapADD
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Repositories adding"
+    echo -en "(${NUMS}/${PLAI}) Packages installing"
+		necPACK
         popPACK
         packPANEL
         varPOP
@@ -337,7 +337,6 @@ setting_location() {
     log_t "Setting location/Detected OS Version: "$DISTNAME" "$DISTVER
     echo -en "(${NUMS}/${LSMS}) Repositories adding"
         addREPO
-		necPACK
         infoStats
     echo -en "(${NUMS}/${LSMS}) Packages list updating"
         sysUPDATE
@@ -348,7 +347,8 @@ setting_location() {
     echo -en "(${NUMS}/${LSMS}) Checking and adding swap"
         swapADD
         infoStats
-    echo -en "(${NUMS}/${LSMS}) Repositories adding"
+    echo -en "(${NUMS}/${LSMS}) Packages installing"
+		necPACK
         popPACK
         varPOP
         varLOCATION
