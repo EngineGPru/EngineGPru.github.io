@@ -105,8 +105,8 @@ install_enginegp() {
     clear
     log_t "Start Install EngineGP/Detected OS Version: "$DISTNAME" "$DISTVER
     echo -en "(${NUMS}/${PIMS}) Repositories adding"
+		addREPO
         necPACK
-        addREPO
         infoStats
     echo -en "(${NUMS}/${PIMS}) Packages list updating"
         sysUPDATE
@@ -202,8 +202,8 @@ install_enginegp_location() {
     clear
     log_t "Start Install And Setting/Detected OS Version: "$DISTNAME" "$DISTVER
     echo -en "(${NUMS}/${PLAI}) Repositories adding"
-        necPACK
         addREPO
+		necPACK
         infoStats
     echo -en "(${NUMS}/${PLAI}) Packages list updating"
         sysUPDATE
@@ -336,8 +336,8 @@ setting_location() {
     clear
     log_t "Setting location/Detected OS Version: "$DISTNAME" "$DISTVER
     echo -en "(${NUMS}/${LSMS}) Repositories adding"
-        necPACK
         addREPO
+		necPACK
         infoStats
     echo -en "(${NUMS}/${LSMS}) Packages list updating"
         sysUPDATE
