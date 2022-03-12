@@ -1180,10 +1180,9 @@ setPMA() {
         echo 'phpmyadmin phpmyadmin/reconfigure-webserver multiselect apache2' | debconf-set-selections > /dev/null 2>&1
         apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install phpmyadmin > /dev/null 2>&1
     else
-		cd ~ > /dev/null 2>&1
-        wget $PMALINK > /dev/null 2>&1
-        tar xvf $PMAVER.tar.gz > /dev/null 2>&1
-        rm $PMAVER.tar.gz > /dev/null 2>&1
+        #wget $PMALINK > /dev/null 2>&1
+        tar xvf EngineGP-requirements/phpmyadmin/$PMAVER.tar.gz > /dev/null 2>&1
+        #rm EngineGP-requirements/phpmyadmin/$PMAVER.tar.gz > /dev/null 2>&1
         sudo mv $PMAVER/ /usr/share/phpmyadmin > /dev/null 2>&1
         sudo mkdir -p /var/lib/phpmyadmin/tmp > /dev/null 2>&1
         sudo mkdir -p /usr/share/phpmyadmin/tmp > /dev/null 2>&1
