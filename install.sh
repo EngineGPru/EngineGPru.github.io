@@ -33,7 +33,7 @@ elif [ $DISTNAME == "CentOS" ]; then
 fi
 
 DOMAIN="http://enginegp.ru" # Основной домен для работы
-SHVER="2.07" # Версия установщика
+SHVER="2.08" # Версия установщика
 
 echo "Getting data from the server..."
 
