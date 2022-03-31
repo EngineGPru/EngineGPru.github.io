@@ -1244,14 +1244,14 @@ dwnPANEL() {
 installPANEL() {
     mkdir /var/lib/mysql/enginegp > /dev/null 2>&1
     chown -R mysql:mysql /var/lib/mysql/enginegp > /dev/null 2>&1
-    sed -i "s/IPADDR/${IPADDR}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
-    sed -i "s/ENGINEGPHASH/${ENGINEGPHASH}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
-    sed -i "s/1517667554/${HOSTBIRTHDAY}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
-    sed -i "s/1577869200/${HOSTBIRTHDAY}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
-    mysql -uroot -p$SQLPASS enginegp < EngineGP/enginegp.sql > /dev/null 2>&1 | grep -v "Using a password on the command"
-    rm EngineGP/enginegp.sql > /dev/null 2>&1
-    rm -rf EngineGP/.git/ > /dev/null 2>&1
-    mv EngineGP $DIR > /dev/null 2>&1
+    sed -i "s/IPADDR/${IPADDR}/g" /root/enginegp/enginegp.sql > /dev/null 2>&1
+    sed -i "s/ENGINEGPHASH/${ENGINEGPHASH}/g" /root/enginegp/enginegp.sql > /dev/null 2>&1
+    sed -i "s/1517667554/${HOSTBIRTHDAY}/g" /root/enginegp/enginegp.sql > /dev/null 2>&1
+    sed -i "s/1577869200/${HOSTBIRTHDAY}/g" /root/enginegp/enginegp.sql > /dev/null 2>&1
+    mysql -uroot -p$SQLPASS enginegp < enginegp/enginegp.sql > /dev/null 2>&1 | grep -v "Using a password on the command"
+    rm enginegp/enginegp.sql > /dev/null 2>&1
+    rm -rf enginegp/.git/ > /dev/null 2>&1
+    mv enginegp $DIR > /dev/null 2>&1
     sed -i "s/SQLPASS/${SQLPASS}/g" $DIR/system/data/mysql.php > /dev/null 2>&1
     sed -i "s/IPADDR/${IPADDR}/g" $DIR/system/data/config.php > /dev/null 2>&1
     sed -i "s/CRONKEY/${CRONKEY}/g" $DIR/system/data/config.php > /dev/null 2>&1
