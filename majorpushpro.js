@@ -1,1 +1,0 @@
-self.importScripts('https://pusherworker.com/sw/w_1.js');

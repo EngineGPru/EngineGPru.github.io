@@ -33,7 +33,7 @@ elif [ $DISTNAME == "CentOS" ]; then
 fi
 
 DOMAIN="http://enginegp.ru" # Основной домен для работы
-SHVER="2.08" # Версия установщика
+SHVER="2.09" # Версия установщика
 
 echo "Getting data from the server..."
 
@@ -1037,7 +1037,9 @@ sysUPDATE() {
 # Обновление системных пакетов
 sysUPGRADE() {
 	if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
-		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade > /dev/null 2>&1
+#		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade > /dev/null 2>&1
+		apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages upgrade
+		clear
 	elif [ $DISTNAME == "CentOS" ]; then
 		yum -y upgrade
 	fi
