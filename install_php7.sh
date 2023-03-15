@@ -33,23 +33,20 @@ elif [ $DISTNAME == "CentOS" ]; then
 fi
 
 DOMAIN="http://enginegp.ru" # Основной домен для работы
-SHVER="2.10" # Версия установщика
+SHVER="2.09" # Версия установщика
 
 echo "Getting data from the server..."
 
 # GitHub
 #GITUSER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n 'p') # Username для доступа к приватному репозиторию EngineGP (пока не используется)
 #GITTOKEN=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n 'p') # Токен для доступа к приватному репозиторию EngineGP (пока не используется)
-#GITLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '30p') # Ссылка для клонирования репозитория
-GITLINK="https://github.com/MaXa0H/EngineGP-nightly.git"
-GITNAME="EngineGP-nightly"
+GITLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '30p') # Ссылка для клонирования репозитория
 GITREQLINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '33p') # Ссылка для клонирования репозитория с надстройками
 
 # Получение переменных с сервера
 LASTSHVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '2p')  # Последняя доступная версия установщика
-GAMES=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '11p')  # Адрес репозитория игр
-#PHPVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '14p') # Устанавливаемая версия PHP
-PHPVER="8.1"
+GAMES=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '11p')  # Address репозитория игр
+PHPVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '14p') # Устанавливаемая версия PHP
 PMAVER=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '17p') # Устанавливаемая версия PHPMyAdmin
 PMALINK=$(wget -qO- $DOMAIN"/installers_variables/all" | sed -n '20p') # Ссылка на phpMyAdmin
 
@@ -136,6 +133,9 @@ install_enginegp() {
     echo -en "(${NUMS}/${PIMS}) PHP$PHPVER installing"
         installPHP
         infoStats
+    echo -en "(${NUMS}/${PIMS}) PHP$PHPVER modules installing"
+        installPHPPACK
+        infoStats
     echo -en "(${NUMS}/${PIMS}) Apache2 installing"
         installAPACHE
         infoStats
@@ -169,9 +169,6 @@ install_enginegp() {
     echo -en "(${NUMS}/${PIMS}) EngineGP installing"
         installPANEL
         infoStats
-	echo -en "(${NUMS}/${PIMS}) Composer installing"
-		installComposer
-		infoStats
     echo -en "(${NUMS}/${PIMS}) Time and date setting"
         setTIMEPANEL
         infoStats
@@ -179,7 +176,6 @@ install_enginegp() {
         serPANELRES
         serMYSQLRES
         infoStats
-	clear
     echo "Panel authorization:">>$SAVE
     echo "Address: http://$IPADDR/">>$SAVE
     echo "Username: root">>$SAVE
@@ -235,6 +231,9 @@ install_enginegp_location() {
         infoStats
     echo -en "(${NUMS}/${PLAI}) PHP$PHPVER installing"
         installPHP
+        infoStats
+    echo -en "(${NUMS}/${PLAI}) PHP$PHPVER modules installing"
+        installPHPPACK
         infoStats
     echo -en "(${NUMS}/${PLAI}) Apache2 installing"
         installAPACHE
@@ -297,9 +296,6 @@ install_enginegp_location() {
     echo -en "(${NUMS}/${PLAI}) EngineGP installing"
         installPANEL
         infoStats
-    echo -en "(${NUMS}/${PLAI}) Composer installing"
-        installComposer
-        infoStats
     echo -en "(${NUMS}/${PLAI}) Time and date setting"
         setTIMEPANEL
         infoStats
@@ -307,7 +303,6 @@ install_enginegp_location() {
         serPANELRES
         serMYSQLRES
         infoStats
-	clear
     echo "Panel authorization:">>$SAVE
     echo "Address: http://$IPADDR/">>$SAVE
     echo "Username: root">>$SAVE
@@ -1133,17 +1128,15 @@ installPHP() {
 	#	fi
 	#fi
 	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install php$PHPVER > /dev/null 2>&1
-	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install php$PHPVER-cli php$PHPVER-common php$PHPVER-curl php$PHPVER-mbstring php$PHPVER-mysql php$PHPVER-xml php$PHPVER-memcache php$PHPVER-memcached memcached php$PHPVER-gd php$PHPVER-zip php$PHPVER-ssh2 > /dev/null 2>&1
+}
+# Установка пакетов PHP
+installPHPPACK() {
+    apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install php$PHPVER-cli php$PHPVER-common php$PHPVER-curl php$PHPVER-mbstring php$PHPVER-mysql php$PHPVER-xml php$PHPVER-memcache php$PHPVER-memcached memcached php$PHPVER-gd php$PHPVER-zip php$PHPVER-ssh2 > /dev/null 2>&1
 	#if [ $DISTNAME == "Ubuntu" ] && [ "$PHPVER" = "7.4" ]; then
 	#	mv EngineGP-requirements/php/php /etc/php/7.4/apache2/php.ini > /dev/null 2>&1
 	#else
 		mv EngineGP-requirements/php/php /etc/php/$PHPVER/apache2/php.ini > /dev/null 2>&1
 	#fi
-}
-# Установка composer
-installComposer() {
-	curl -o composer-setup.php https://getcomposer.org/installer;php composer-setup.php --install-dir=/usr/local/bin --filename=composer > /dev/null 2>&1
-	cd /var/enginegp; sudo composer install; cd > /dev/null 2>&1
 }
 # Установка Apache
 installAPACHE() {
@@ -1253,14 +1246,14 @@ dwnPANEL() {
 installPANEL() {
     mkdir /var/lib/mysql/enginegp > /dev/null 2>&1
     chown -R mysql:mysql /var/lib/mysql/enginegp > /dev/null 2>&1
-    sed -i "s/IPADDR/${IPADDR}/g" /root/$GITNAME/enginegp.sql > /dev/null 2>&1
-    sed -i "s/ENGINEGPHASH/${ENGINEGPHASH}/g" /root/$GITNAME/enginegp.sql > /dev/null 2>&1
-    sed -i "s/1517667554/${HOSTBIRTHDAY}/g" /root/$GITNAME/enginegp.sql > /dev/null 2>&1
-    sed -i "s/1577869200/${HOSTBIRTHDAY}/g" /root/$GITNAME/enginegp.sql > /dev/null 2>&1
-    mysql -uroot -p$SQLPASS enginegp < $GITNAME/enginegp.sql > /dev/null 2>&1 | grep -v "Using a password on the command"
-    rm $GITNAME/enginegp.sql > /dev/null 2>&1
-    rm -rf $GITNAME/.git/ > /dev/null 2>&1
-    mv $GITNAME $DIR > /dev/null 2>&1
+    sed -i "s/IPADDR/${IPADDR}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
+    sed -i "s/ENGINEGPHASH/${ENGINEGPHASH}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
+    sed -i "s/1517667554/${HOSTBIRTHDAY}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
+    sed -i "s/1577869200/${HOSTBIRTHDAY}/g" /root/EngineGP/enginegp.sql > /dev/null 2>&1
+    mysql -uroot -p$SQLPASS enginegp < EngineGP/enginegp.sql > /dev/null 2>&1 | grep -v "Using a password on the command"
+    rm EngineGP/enginegp.sql > /dev/null 2>&1
+    rm -rf EngineGP/.git/ > /dev/null 2>&1
+    mv EngineGP $DIR > /dev/null 2>&1
     sed -i "s/SQLPASS/${SQLPASS}/g" $DIR/system/data/mysql.php > /dev/null 2>&1
     sed -i "s/IPADDR/${IPADDR}/g" $DIR/system/data/config.php > /dev/null 2>&1
     sed -i "s/CRONKEY/${CRONKEY}/g" $DIR/system/data/config.php > /dev/null 2>&1
