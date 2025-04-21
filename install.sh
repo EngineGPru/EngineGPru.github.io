@@ -28,12 +28,13 @@ fi
 echo "Preparing operation system..."
 if [ $DISTNAME == "Debian" ] || [ $DISTNAME == "Ubuntu" ]; then
 	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install wget > /dev/null 2>&1
+ 	apt -y --force-yes --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install lsb-release > /dev/null 2>&1
 elif [ $DISTNAME == "CentOS" ]; then
 	yum -y install wget
 fi
 
 DOMAIN="http://enginegp.ru" # Основной домен для работы
-SHVER="2.09" # Версия установщика
+SHVER="2.10" # Версия установщика
 
 echo "Getting data from the server..."
 
